@@ -4,8 +4,6 @@
 ##  work for HW 3 properly.                        ##
 #####################################################
 
-import numpy as np
-import numpy.typing as npt
 import sympy as sp
 from sympy.physics.mechanics import dynamicsymbols
 
@@ -186,25 +184,6 @@ class SymRobot:
         Q_ddot_ = self.Q_ddot.subs([(self.theta_1, theta_1), (self.theta_2, theta_2), (self.theta_3, theta_3)])
 
         return sp.simplify(M_ @ Q_ddot_ + V_ + G_)
-
-
-class NumRobot:
-    def __init__(self) -> None:
-        pass
-
-    @staticmethod
-    def create_T(alpha_n, b_n, theta_n, d_n) -> npt.NDArray[np.float64]:
-        """
-        Creates a transformation matrix for given values of alpha, b, theta, and d.
-        """
-
-        return np.array([
-            [np.cos(theta_n), -np.sin(theta_n), 0, b_n],
-            [np.cos(alpha_n) * np.sin(theta_n), np.cos(alpha_n) *
-             np.cos(theta_n), -np.sin(alpha_n), -d_n * np.sin(alpha_n)],
-            [np.sin(alpha_n) * np.sin(theta_n), np.sin(alpha_n) * np.cos(theta_n),
-             np.cos(alpha_n), d_n * np.cos(alpha_n)], [0, 0, 0, 1]
-        ])
 
 
 bot = SymRobot()
