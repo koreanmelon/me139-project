@@ -8,21 +8,24 @@ import sympy as sp
 from sympy.physics.mechanics import dynamicsymbols
 
 
+# ! DONT USE THIS CODE
+# ! THIS IS ONLY HERE FOR REFERENCE IF NEEDED
+# ! MOST OF THIS MATH IS WRONG, SEE `case-1.ipynb` INSTEAD
 class SymRobot:
     g = sp.Symbol('g')  # gravity
     t = sp.Symbol('t')  # time
 
     def __init__(self) -> None:
         # Symbolic Variables
-        self.M_1 = sp.Symbol("M_1")  # mass of tibia
-        self.M_2 = sp.Symbol("M_2")  # mass of femur
-        self.M_3 = sp.Symbol("M_3")  # mass of rest of human
-        self.l_1 = sp.Symbol("l_1")  # tibia length
-        self.l_2 = sp.Symbol("l_2")  # femur length
-        self.l_3 = sp.Symbol("l_3")  # body length
-        self.l_c1 = sp.Symbol("l_c1")  # tibia length
-        self.l_c2 = sp.Symbol("l_c2")  # femur length
-        self.l_c3 = sp.Symbol("l_c3")  # body length
+        self.m_1 = sp.symbols("M_1")  # mass of tibia
+        self.m_2 = sp.symbols("M_2")  # mass of femur
+        self.m_3 = sp.symbols("M_3")  # mass of rest of human
+        self.l_1 = sp.symbols("l_1")  # tibia length
+        self.l_2 = sp.symbols("l_2")  # femur length
+        self.l_3 = sp.symbols("l_3")  # body length
+        self.l_c1 = sp.symbols("l_c1")  # tibia length
+        self.l_c2 = sp.symbols("l_c2")  # femur length
+        self.l_c3 = sp.symbols("l_c3")  # body length
 
         self.alpha_1 = 0
         self.alpha_2 = 0
@@ -103,12 +106,12 @@ class SymRobot:
         )
 
         # Moment of Inertias
-        self.I_c1 = SymRobot.create_I_c(self.M_1, self.l_1)
-        self.I_c2 = SymRobot.create_I_c(self.M_2, self.l_2)
-        self.I_c3 = SymRobot.create_I_c(self.M_3, self.l_3)
+        self.I_c1 = SymRobot.create_I_c(self.m_1, self.l_1)
+        self.I_c2 = SymRobot.create_I_c(self.m_2, self.l_2)
+        self.I_c3 = SymRobot.create_I_c(self.m_3, self.l_3)
 
-        M_term_2 = sp.simplify(self.M_2 * self.J_v2.T @ self.J_v2 + self.I_c2 * self.J_omega2.T @ self.J_omega2)
-        M_term_3 = sp.simplify(self.M_3 * self.J_v3.T @ self.J_v3 + self.I_c3 * self.J_omega3.T @ self.J_omega3)
+        M_term_2 = sp.simplify(self.m_2 * self.J_v2.T @ self.J_v2 + self.I_c2 * self.J_omega2.T @ self.J_omega2)
+        M_term_3 = sp.simplify(self.m_3 * self.J_v3.T @ self.J_v3 + self.I_c3 * self.J_omega3.T @ self.J_omega3)
 
         self.M: sp.Matrix = sp.simplify(M_term_2 + M_term_3)
         self.M_dot = self.M.diff(SymRobot.t)
@@ -127,7 +130,7 @@ class SymRobot:
         h_2: sp.Expr = (self.T[(0, 2)] @ sp.Matrix([self.l_c2, 0, 0, 1]).reshape(4, 1))[1]
         h_3: sp.Expr = (self.T[(0, 3)] @ sp.Matrix([self.l_c3, 0, 0, 1]).reshape(4, 1))[1]
 
-        self.P = sp.simplify(SymRobot.g * (self.M_1 * h_1 + self.M_2 * h_2 + self.M_3 * h_3))
+        self.P = sp.simplify(SymRobot.g * (self.m_1 * h_1 + self.m_2 * h_2 + self.m_3 * h_3))
 
         self.G = sp.Matrix([
             self.P.diff(self.theta_1),
@@ -138,17 +141,15 @@ class SymRobot:
         self.Torque: sp.Matrix = sp.simplify(self.M @ self.Q_ddot + self.V + self.G)
 
     @staticmethod
-    def create_T(alpha_n, b_n, theta_n, d_n) -> sp.Matrix:
+    def create_T(alpha, b, theta, d) -> sp.Matrix:
         """
         Creates a transformation matrix for given values of alpha, b, theta, and d.
         """
 
         return sp.simplify(sp.Matrix([
-            [sp.cos(theta_n), sp.Mul(-1, sp.sin(theta_n)), 0, b_n],
-            [sp.Mul(sp.cos(alpha_n), sp.sin(theta_n)), sp.Mul(sp.cos(alpha_n), sp.cos(theta_n)),
-             sp.Mul(-1, sp.sin(alpha_n)), sp.Mul(sp.Mul(-1, d_n), sp.sin(alpha_n))],
-            [sp.Mul(sp.sin(alpha_n), sp.sin(theta_n)), sp.Mul(sp.sin(alpha_n), sp.cos(
-                theta_n)), sp.cos(alpha_n), sp.Mul(d_n, sp.cos(alpha_n))],
+            [sp.cos(theta), -sp.sin(theta), 0, b],  # type: ignore
+            [sp.cos(alpha) * sp.sin(theta), sp.cos(alpha) * sp.cos(theta), -sp.sin(alpha), -d * sp.sin(alpha)],  # type: ignore
+            [sp.sin(alpha) * sp.sin(theta), sp.sin(alpha) * sp.cos(theta), sp.cos(alpha), d * sp.cos(alpha)],  # type: ignore
             [0, 0, 0, 1]
         ]))
 
@@ -158,7 +159,7 @@ class SymRobot:
         Extracts the rotation matrix from a transformation matrix.
         """
 
-        return T.extract([0, 1, 2], [0, 1, 2])
+        return T[:3, :3]  # type: ignore
 
     @staticmethod
     def extract_D(T: sp.Matrix) -> sp.Matrix:
@@ -166,16 +167,16 @@ class SymRobot:
         Extracts the translation vector from a transformation matrix.
         """
 
-        return T.extract([0, 1, 2], [3])
+        return T[:3, 3]  # type: ignore
 
     @staticmethod
-    def create_I_c(M_n, l_n) -> sp.Expr:
+    def create_I_c(m, l) -> sp.Expr:
         """
         Computes the moment of inertia of a link (rod) about its center of mass
         given its mass and length.
         """
 
-        return sp.Rational(1, 12) * M_n * l_n ** 2
+        return sp.Rational(1, 12) * m * l ** 2
 
     def evalute(self, theta_1, theta_2, theta_3):
         M_ = self.M.subs([(self.theta_1, theta_1), (self.theta_2, theta_2), (self.theta_3, theta_3)])
