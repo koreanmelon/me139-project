@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from turtle import width
 from typing import Any, Optional
 
 import numpy as np
@@ -37,7 +36,7 @@ class Link(TLine):
     zorder: int = 1
     
 
-class BaseSystem(ABC):
+class RoboticSystem(ABC):
     """
     Base class used to define a robotic system. Note that all computation
     related to the system is done in this class.
@@ -48,6 +47,15 @@ class BaseSystem(ABC):
     
     g_sym = sp.Symbol('g') # gravitational acceleration (m/s^2)
     t_sym = sp.Symbol('t') # time (s)
+    
+    @property
+    @abstractmethod
+    def n(self) -> int:
+        """
+        Number of links in the system.
+        """
+        ...
+    
 
     @abstractmethod
     def links(self, theta_t_vec: list[Vec]) -> list[Link]:

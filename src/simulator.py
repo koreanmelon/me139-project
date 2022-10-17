@@ -1,12 +1,12 @@
 import numpy as np
-import numpy.typing as npt
 from matplotlib.animation import FFMpegWriter, FuncAnimation
 from matplotlib.patches import Circle
-from matplotlib.pyplot import figure, show
+from matplotlib.pyplot import figure
 from scipy.integrate import solve_ivp
 
-from systems.base_system import BaseSystem, Vec
 from systems.reaction_wheel_system import ReactionWheelSystem
+from systems.system import RoboticSystem as RS
+from systems.system import Vec
 
 
 class Simulator:
@@ -14,21 +14,20 @@ class Simulator:
     Simulates an arbitrary robotic system and renders the animation.
     """
     
-    def __init__(self, system: BaseSystem, duration=5, fps=30, speed=1) -> None:
+    def __init__(self, system: RS, duration=5, fps=30, speed=1) -> None:
         self.system = system
         
-        self.duration = duration # (sec)
-        self.fps = fps # (frames/sec)
-        
-        self.frames = self.fps * self.duration # (frames)
-        self.dt = 1 / self.fps # (sec)
+        self.duration = duration                # (sec)
+        self.fps = fps                          # (frames/sec)
+        self.frames = self.fps * self.duration  # rendered frames (frames)
+        self.dt = 1 / self.fps                  # timestep (sec)
         
         self.t_range = np.linspace(0, self.duration, self.frames, endpoint=False)
         assert self.t_range[1] - self.t_range[0] == self.dt
         
         self.writer = FFMpegWriter(fps=self.fps * speed)
     
-    def run(self,Q_0: Vec = np.array([0, 0, 0, 0]), figsize: tuple[float, float] = (6, 6), dpi: float = 100):
+    def run(self, Q_0: Vec = np.array([0, 0, 0, 0]), figsize: tuple[float, float] = (6, 6), dpi: float = 100):
         """
         Run the simulation and render the animation.
         """
@@ -50,6 +49,7 @@ class Simulator:
         """
         Save the animation to a file.
         """
+        
         self.animation.save(f"assets/outputs/{filename}", writer=self.writer)
         
         return self
@@ -99,6 +99,10 @@ class Simulator:
             )
 
     def simulate(self, Q_0: Vec) -> None:
+        """
+        Simulate the system and store the results.
+        """
+        
         Q = solve_ivp(
             fun=self.system.deriv,
             t_span=(0, self.duration),
@@ -106,11 +110,10 @@ class Simulator:
             t_eval=self.t_range
         ).y
 
-        theta_1 = Q[0]
-        theta_2 = Q[2]
+        theta_t_vec = Q[:self.system.n]
         
-        self.links = self.system.links([theta_1, theta_2])
-        self.joints = self.system.joints([theta_1, theta_2])
+        self.links = self.system.links(theta_t_vec)
+        self.joints = self.system.joints(theta_t_vec)
 
 
 if __name__ == "__main__":
@@ -128,4 +131,4 @@ if __name__ == "__main__":
         fps=60
     )
     
-    sim.run(np.array([0, 0, 0, 0])).save("case-1.mp4")
+    sim.run().save("case-1.mp4")
