@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Callable
 
 import numpy as np
@@ -9,23 +10,33 @@ from systems.system import RoboticSystem as RS
 from systems.system import TCoordinate, VarDict, Vec
 
 
+@dataclass
+class RWParams:
+    l_1: float = 1.0
+    l_c1: float = 1.0
+    r: float = 1.0
+    m_1: float = 1.0
+    m_2: float = 1.0
+    tau: Callable[[Vec], float] = lambda Q: 0.0
+
+
 class ReactionWheel(RS):
     """
     A system with a single link and a reaction wheel attached to the end of the link.
     """
     
-    def __init__(self, l_1=1.0, l_c1=1.0, r=1.0, m_1=1.0, m_2=1.0) -> None:
+    def __init__(self, params: RWParams) -> None:
         super().__init__()
         
         # Controls
-        self.tau = lambda Q: 0
+        self.tau = params.tau
         
         # System Parameters
-        self.l_1 = l_1      # rod length (m)
-        self.l_c1 = l_c1    # rod center of mass (m)
-        self.r = r          # reaction wheel radius (m)
+        self.l_1 = params.l_1       # rod length (m)
+        self.l_c1 = params.l_c1     # rod center of mass (m)
+        self.r = params.r           # reaction wheel radius (m)
         
-        self.m = { 1: m_1, 2: m_2 }
+        self.m = { 1: params.m_1, 2: params.m_2 }
         
         self.I_c = {
             "1": RS.construct_I(self.m[1], self.l_1, "rod_center"),
@@ -51,7 +62,7 @@ class ReactionWheel(RS):
         
         self.Q = sp.Matrix([self.theta[1], self.theta[2]]).reshape(2, 1)
         
-        self.P = sp.simplify((self.m[1] * RS.g_sym * l_c1 * sp.sin(self.theta[1])) + (self.m[2] * RS.g_sym * l_1 * sp.sin(self.theta[1])))
+        self.P = sp.simplify((self.m[1] * RS.g_sym * self.l_c1 * sp.sin(self.theta[1])) + (self.m[2] * RS.g_sym * self.l_1 * sp.sin(self.theta[1])))
         
         self.T = self.compute_T(self.alpha, self.b, self.theta, self.d)
         

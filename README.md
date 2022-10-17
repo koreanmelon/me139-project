@@ -6,6 +6,7 @@ ME 139 Group 9: Connor Hennig, Jenny Mei, Kevin Cheng, Taewon Kim
 
 - [Project Description](#project-description)
 - [Quick Start](#quick-start)
+- [TODO](#todo)
 
 ## Project Description
 
@@ -14,3 +15,9 @@ The idea of this project is to create a bipedal robot that is able to walk, grac
 ## Quick Start
 
 View the `src/case-1.ipynb` file to see the code for the first case study.
+
+## TODO
+
+- [ ] Add more documentation
+- [ ] Structure output video names with random ID/hash/timestamp to avoid overwriting
+- [ ] Use `argparse` to parse command line arguments
