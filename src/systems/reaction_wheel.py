@@ -21,26 +21,15 @@ class ReactionWheel(RS):
         self.tau = lambda Q: 0
         
         # System Parameters
-        self.l_1 = l_1 # rod length (m)
-        self.l_c1 = l_c1 # rod center of mass (m)
-        self.r = r # reaction wheel radius (m)
+        self.l_1 = l_1      # rod length (m)
+        self.l_c1 = l_c1    # rod center of mass (m)
+        self.r = r          # reaction wheel radius (m)
         
-        self.m = {
-            1: m_1,
-            2: m_2
-        }
+        self.m = { 1: m_1, 2: m_2 }
         
         self.I_c = {
-            "1": sp.diag(
-                1/12 * self.m[1] * self.l_1**2,
-                1/12 * self.m[1] * self.l_1**2,
-                1/12 * self.m[1] * self.l_1**2
-            ),
-            "2": sp.diag(
-                1/2 * self.m[2] * self.r**2,
-                1/2 * self.m[2] * self.r**2,
-                1/2 * self.m[2] * self.r**2
-            )
+            "1": RS.construct_I(self.m[1], self.l_1, "rod_center"),
+            "2": RS.construct_I(self.m[2], self.r, "disk_axis")
         }
         
         self.alpha = { 1: 0, 2: 0 }

@@ -122,22 +122,24 @@ class RoboticSystem(ABC):
         ]))
     
     @staticmethod
-    def construct_I(m, l, shape="rod_center") -> sp.Expr:
+    def construct_I(m, l, shape="rod_center") -> sp.Matrix:
         """
         Computes the moment of inertia of a link about its center of mass
         given its mass and length.
         """
         
         if shape == "rod_center":
-            return sp.Rational(1, 12) * m * l**2
+            val = sp.Rational(1, 12) * m * l**2
         elif shape == "rod_hollow":
-            return m * l**2
+            val = m * l**2
         elif shape == "disk_axis":
-            return sp.Rational(1, 2) * m * l**2
+            val = sp.Rational(1, 2) * m * l**2
         elif shape == "sphere":
-            return sp.Rational(2, 5) * m * l**2
+            val = sp.Rational(2, 5) * m * l**2
         else:
             raise ValueError(f"Invalid shape: {shape}")
+
+        return sp.diag(val, val, val)
     
     @staticmethod
     def extract_R(T: sp.Matrix) -> sp.Matrix:
