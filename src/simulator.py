@@ -4,7 +4,7 @@ from matplotlib.patches import Circle
 from matplotlib.pyplot import figure
 from scipy.integrate import solve_ivp
 
-from systems.reaction_wheel_system import ReactionWheelSystem
+from systems.reaction_wheel import ReactionWheel
 from systems.system import RoboticSystem as RS
 from systems.system import Vec
 
@@ -117,7 +117,7 @@ class Simulator:
 
 
 if __name__ == "__main__":
-    reaction_wheel = ReactionWheelSystem(
+    reaction_wheel = ReactionWheel(
         l_1=0.5,
         l_c1=0.25,
         m_1=1,

@@ -9,7 +9,7 @@ from systems.system import RoboticSystem as RS
 from systems.system import TCoordinate, VarDict, Vec
 
 
-class ReactionWheelSystem(RS):
+class ReactionWheel(RS):
     """
     A system with a single link and a reaction wheel attached to the end of the link.
     """
