@@ -1,4 +1,4 @@
-# ME 139 Project - Self-Balancing Robot <!-- omit in toc -->
+# ME 139 Project - Reaction Wheel-Based Stability of a Three-Link Inverted Pendulum <!-- omit in toc -->
 
 Team Members: Connor Hennig, Jenny Mei, Kevin Cheng, Taewon Kim
 
