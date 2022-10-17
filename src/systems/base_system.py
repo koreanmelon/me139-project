@@ -1,14 +1,46 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from dataclasses import dataclass
+from turtle import width
+from typing import Any, Optional
 
 import numpy as np
 import numpy.typing as npt
 import sympy as sp
 
+VarDict = dict[int, Any]
+MatDict = dict[str, sp.Matrix]
+
+Vec = npt.NDArray[np.float64]
+
+@dataclass
+class TCoordinate:
+    x: Vec
+    y: Vec
+
+@dataclass
+class TLine:
+    start: TCoordinate
+    end: TCoordinate
+    
+@dataclass
+class Joint(TCoordinate):
+    edgecolor: Optional[str] = None
+    facecolor: Optional[str] = None
+    color: str = 'k'
+    radius: float = 0.05
+    zorder: int = 1
+
+@dataclass
+class Link(TLine):
+    linewidth: float = 1
+    color: str = "black"
+    zorder: int = 1
+    
 
 class BaseSystem(ABC):
     """
-    Base class used to define a rigid body system.
+    Base class used to define a robotic system. Note that all computation
+    related to the system is done in this class.
     """
     
     # Constants
@@ -18,11 +50,58 @@ class BaseSystem(ABC):
     t_sym = sp.Symbol('t') # time (s)
 
     @abstractmethod
-    def deriv(self, t: npt.NDArray[np.float64], Q: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def links(self, theta_t_vec: list[Vec]) -> list[Link]:
+        ...
+    
+    @abstractmethod
+    def joints(self, theta_t_vec: list[Vec]) -> list[Joint]:
+        ...
+
+    @abstractmethod
+    def solve_system(self) -> None:
+        ...
+    
+    @abstractmethod
+    def deriv(self, t: Vec, Q: Vec) -> Vec:
         ...
     
     @staticmethod
-    def create_T(alpha, b, theta, d) -> sp.Matrix:
+    @abstractmethod
+    def compute_T(alpha: VarDict, b: VarDict, theta: VarDict, d: VarDict) -> MatDict:
+        ...
+    
+    @staticmethod
+    @abstractmethod
+    def compute_R(T: MatDict) -> MatDict:
+        ...
+    
+    @staticmethod
+    @abstractmethod
+    def compute_J(R: MatDict, D: MatDict) -> tuple[MatDict, MatDict]:
+        ...
+    
+    @staticmethod
+    @abstractmethod
+    def compute_M(m: VarDict, I_c: MatDict, J_v: MatDict, J_omega: MatDict) -> sp.Matrix:
+        ...
+    
+    @staticmethod
+    @abstractmethod
+    def compute_V(M: sp.Matrix, Q: sp.Matrix, theta: VarDict) -> sp.Matrix:
+        ...
+    
+    @staticmethod
+    @abstractmethod
+    def compute_G(P: sp.Expr, theta: VarDict) -> sp.Matrix:
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def compute_torque(M: sp.Matrix, Q: sp.Matrix, V: sp.Matrix, G: sp.Matrix) -> sp.Matrix:
+        ...
+    
+    @staticmethod
+    def construct_T(alpha, b, theta, d) -> sp.Matrix:
         """
         Creates a transformation matrix for given values of alpha, b, theta, and d.
         """
@@ -33,9 +112,9 @@ class BaseSystem(ABC):
             [sp.sin(alpha) * sp.sin(theta), sp.sin(alpha) * sp.cos(theta), sp.cos(alpha), d * sp.cos(alpha)],  # type: ignore
             [0, 0, 0, 1]
         ]))
-
+    
     @staticmethod
-    def create_I_c(m, l, shape="rod_center") -> sp.Expr:
+    def construct_I(m, l, shape="rod_center") -> sp.Expr:
         """
         Computes the moment of inertia of a link about its center of mass
         given its mass and length.
@@ -51,19 +130,6 @@ class BaseSystem(ABC):
             return sp.Rational(2, 5) * m * l**2
         else:
             raise ValueError(f"Invalid shape: {shape}")
-    
-    @staticmethod
-    def create_V(M: sp.Matrix, Q: sp.Matrix, theta_list: list[Any]) -> sp.Matrix:
-        """
-        Computes the Coriolis and centrifugal matrix.
-        """
-        
-        M_d: sp.Matrix = M.diff(BaseSystem.t_sym)  # type: ignore
-        Q_d: sp.Matrix = Q.diff(BaseSystem.t_sym)  # type: ignore
-        
-        temp_mat_components = [Q_d.T @ M.diff(theta) @ Q_d for theta in theta_list]
-        
-        return sp.simplify(M_d @ Q_d - sp.Rational(1, 2) * sp.Matrix.vstack(*temp_mat_components))
     
     @staticmethod
     def extract_R(T: sp.Matrix) -> sp.Matrix:

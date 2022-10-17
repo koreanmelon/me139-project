@@ -5,30 +5,15 @@ from matplotlib.patches import Circle
 from matplotlib.pyplot import figure, show
 from scipy.integrate import solve_ivp
 
+from systems.base_system import BaseSystem, Vec
 from systems.reaction_wheel_system import ReactionWheelSystem
-from systems.base_system import BaseSystem
-
-# Constants
-g = 9.81 # gravity (m/s^2)
-
-# Pendulum dimensions
-l_1 = 1 # rod length (m)
-l_c1 = 0.5 # distance along rod to center of mass (m)
-
-r = 0.1 # radius of reaction wheel (m)
-
-m_1 = 0.5 # mass of rod (kg)
-m_2 = 2 # mass of reaction wheel (kg)
-
-I_c1 = 1/12 * m_1 * l_1**2 # moment of inertia of rod about center of mass (kg m^2)
-I_c2 = 1/2 * m_2 * r**2 # moment of inertia of reaction wheel about center of mass (kg m^2)
-
-# Torques
-tau_1 = 0
-tau_2 = 0
 
 
 class Simulator:
+    """
+    Simulates an arbitrary robotic system and renders the animation.
+    """
+    
     def __init__(self, system: BaseSystem, duration=5, fps=30, speed=1) -> None:
         self.system = system
         
@@ -38,15 +23,16 @@ class Simulator:
         self.frames = self.fps * self.duration # (frames)
         self.dt = 1 / self.fps # (sec)
         
-        self.t = np.linspace(0, self.duration, self.frames, endpoint=False)
-        assert self.t[1] - self.t[0] == self.dt
+        self.t_range = np.linspace(0, self.duration, self.frames, endpoint=False)
+        assert self.t_range[1] - self.t_range[0] == self.dt
         
         self.writer = FFMpegWriter(fps=self.fps * speed)
     
-    def run(self, Q_0=np.array([0, 0, 0, 0]), figsize=(6, 6), dpi=100):
+    def run(self,Q_0: Vec = np.array([0, 0, 0, 0]), figsize: tuple[float, float] = (6, 6), dpi: float = 100):
         """
         Run the simulation and render the animation.
         """
+        
         self.simulate(Q_0)
         
         self.fig = figure(figsize=figsize, dpi=dpi)
@@ -57,8 +43,6 @@ class Simulator:
             frames=self.frames,
             interval=self.dt * 1000
         )
-        
-        # show()
         
         return self
 
@@ -75,48 +59,73 @@ class Simulator:
         Render a single frame of the animation at timestep i.
         """
         
-        # Define circles representing the anchor point and the reaction wheel
-        anchor = Circle((0, 0), radius=0.05, facecolor='k', edgecolor='k', zorder=10)
-        wheel = Circle((self.x1[i], self.y1[i]), radius=r, facecolor='b', edgecolor='b', zorder=10)
-        
         self.ax.clear()
         
         # Center the image on the fixed anchor point and ensure the axes are equal
-        self.ax.set_xlim(- l_1 - r, l_1 + r)
-        self.ax.set_ylim(- l_1 - r, l_1 + r)
+        self.ax.set_xlim(-1, 1)
+        self.ax.set_ylim(-1, 1)
         self.ax.set_aspect('equal', adjustable='box')
         
-        # Plot the pendulum rod
-        self.ax.plot([0, self.x1[i]], [0, self.y1[i]], color='k', linewidth=2)
+        # Plot joints
+        for joint in self.joints:
+            if joint.edgecolor is not None and joint.facecolor is not None:
+                self.ax.add_patch(
+                    Circle(
+                        (joint.x[i], joint.y[i]),
+                        radius=joint.radius,
+                        edgecolor=joint.edgecolor,
+                        facecolor=joint.facecolor,
+                        zorder=joint.zorder
+                    )
+                )
+            else:
+                self.ax.add_patch(
+                    Circle(
+                        (joint.x[i], joint.y[i]),
+                        radius=joint.radius,
+                        color=joint.color,
+                        zorder=joint.zorder
+                    )
+                )
         
-        # Plot the base joint
-        self.ax.add_patch(anchor)
-        
-        # Plot the reaction wheel
-        self.ax.add_patch(wheel)
+        # Plot links
+        for link in self.links:
+            self.ax.plot(
+                [link.start.x[i], link.end.x[i]],
+                [link.start.y[i], link.end.y[i]],
+                linewidth=link.linewidth,
+                color=link.color,
+                zorder=link.zorder
+            )
 
-        # Indicate the reaction wheel's direction
-        self.ax.plot([self.x1[i], self.x2[i]], [self.y1[i], self.y2[i]], color='red', linewidth=2, zorder=11)
-
-    def simulate(self, Q_0: npt.NDArray[np.float64]) -> None:
+    def simulate(self, Q_0: Vec) -> None:
         Q = solve_ivp(
             fun=self.system.deriv,
             t_span=(0, self.duration),
             y0=Q_0,
-            t_eval=self.t
+            t_eval=self.t_range
         ).y
 
         theta_1 = Q[0]
         theta_2 = Q[2]
         
-        self.x1 = l_1 * np.cos(theta_1)
-        self.y1 = l_1 * np.sin(theta_1)
-        self.x2 = self.x1 + r * np.cos(theta_1 + theta_2)
-        self.y2 = self.y1 + r * np.sin(theta_1 + theta_2)
+        self.links = self.system.links([theta_1, theta_2])
+        self.joints = self.system.joints([theta_1, theta_2])
 
 
 if __name__ == "__main__":
-    reaction_wheel = ReactionWheelSystem()
-    sim = Simulator(reaction_wheel, 60, 60, 10)
+    reaction_wheel = ReactionWheelSystem(
+        l_1=0.5,
+        l_c1=0.25,
+        m_1=1,
+        m_2=5,
+        r=0.1,
+    )
+    
+    sim = Simulator(
+        system=reaction_wheel,
+        duration=10,
+        fps=60
+    )
     
     sim.run(np.array([0, 0, 0, 0])).save("case-1.mp4")
