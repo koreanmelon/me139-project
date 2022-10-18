@@ -73,8 +73,8 @@ class Simulator:
         self.ax.clear()
 
         # Center the image on the fixed anchor point and ensure the axes are equal
-        self.ax.set_xlim(-1, 1)
-        self.ax.set_ylim(-1, 1)
+        self.ax.set_xlim(-0.5, 0.5)
+        self.ax.set_ylim(-0.5, 0.5)
         self.ax.set_aspect('equal', adjustable='box')
 
         for joint in self.joints:
@@ -152,11 +152,11 @@ class Simulator:
 if __name__ == "__main__":
     reaction_wheel = ReactionWheel(
         RWParams(
-            l_1=0.5,
-            l_c1=0.25,
-            m_1=1,
-            m_2=5,
-            r=0.1,
+            l_1=0.3,
+            l_c1=0.15,
+            m_1=0.75+0.12+0.2,
+            m_2=0.5,
+            r=0.05,
             tau=lambda Q: 0
         )
     )
@@ -172,10 +172,10 @@ if __name__ == "__main__":
 
     sim = Simulator(
         system=reaction_wheel,
-        duration=60,
-        fps=165
+        duration=5,
+        fps=100
     )
-    
-    sim.run(np.array([0, 0, 0, 0])).save("reaction_wheel.mp4")
+
+    sim.run(np.array([1.5, 0, 0, 0])).save("reaction_wheel.mp4")
 
     # sim.run(np.array([0, 0, 0, 0])).save("double_pendulum.mp4")

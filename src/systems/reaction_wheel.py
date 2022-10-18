@@ -30,6 +30,9 @@ class ReactionWheel(RS):
 
         # Controls
         self.tau = params.tau
+        self.err = [0] * 50
+        self.prev_theta_1dd = 0
+        self.prev_theta_2dd = 0
 
         # System Parameters
         self.l_1 = params.l_1       # rod length (m)
@@ -40,7 +43,7 @@ class ReactionWheel(RS):
 
         self.I_c = {
             "1": RS.construct_I(self.m[1], self.l_1, "rod_center"),
-            "2": RS.construct_I(self.m[2], self.r, "disk_axis")
+            "2": RS.construct_I(self.m[2], self.r, "rod_hollow")
         }
 
         self.alpha = {1: 0, 2: 0}
@@ -186,8 +189,10 @@ class ReactionWheel(RS):
 
     def solve_system(self):
         tau = sp.Symbol("tau")
+        
         system = [sp.Eq(self.torque[0], 0), sp.Eq(self.torque[1], tau)]
         sol = sp.solve(system, [self.theta_dd[1], self.theta_dd[2]])
+        self.sol = sol
 
         self.sol_theta_1dd: Callable[[float, float, float, float, float], float] = sp.lambdify(
             (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2], tau),
@@ -207,10 +212,33 @@ class ReactionWheel(RS):
         theta_1d = Q[2]
         theta_2d = Q[3]
 
-        theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d, self.tau(Q))
-        theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d, self.tau(Q))
+        g = 9.81
 
-        return np.array([theta_1d, theta_2d, theta_1dd, theta_2dd])
+        def torque_func(theta_1dd, theta_2dd):
+            # K_p = 0.1 # ass values
+            # K_d = 0.55
+            # K_i = 0.38
+            K_p = 0.85
+            K_d = 0
+            K_i = 0
+
+            self.err.append(theta_1 - np.pi / 2)
+            integ = np.trapz(self.err[-50:], dx=0.01)
+
+            t_added = K_d * theta_1d + K_i * integ + K_p * (theta_1 - np.pi / 2)
+
+            t_const = (self.m[2] * self.r**2 * (-12 * g * self.l_1 * self.m[2] * np.cos(theta_1) - 12 * g * self.l_c1 * self.m[1] * np.cos(theta_1) + self.l_1**2 * self.m[1] * theta_2dd + 12 * self.l_1**2 * self.m[2] * theta_2dd + 12 * self.l_c1**2 * self.m[1] * theta_2dd)) / \
+                (2 * (self.l_1**2 * self.m[1] + 12 * self.l_1**2 * self.m[2] +
+                 12 * self.l_c1**2 * self.m[1] + 6 * self.m[2] * self.r**2))
+
+            return 0
+
+        self.prev_theta_1dd: float = self.sol_theta_1dd(
+            theta_1, theta_2, theta_1d, theta_2d, torque_func(self.prev_theta_1dd, self.prev_theta_2dd))
+        self.prev_theta_2dd: float = self.sol_theta_2dd(
+            theta_1, theta_2, theta_1d, theta_2d, torque_func(self.prev_theta_1dd, self.prev_theta_2dd))
+
+        return np.array([theta_1d, theta_2d, self.prev_theta_1dd, self.prev_theta_2dd])
 
     def links(self, theta_t_vec: list[Vec]) -> list[Link]:
         assert len(theta_t_vec) == 2, "This system only has two links."
@@ -240,6 +268,7 @@ class ReactionWheel(RS):
         j1 = Joint(
             np.zeros(t_len),
             np.zeros(t_len),
+            radius=0.02,
             color='k',
             zorder=10
         )
