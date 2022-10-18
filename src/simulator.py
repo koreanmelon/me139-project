@@ -150,30 +150,32 @@ class Simulator:
 
 
 if __name__ == "__main__":
-    reaction_wheel = ReactionWheel(
-        RWParams(
-            l_1=0.5,
-            l_c1=0.25,
-            m_1=1,
-            m_2=5,
-            r=0.1,
-            tau=lambda Q: 0
-        )
-    )
-
-    # double_pendulum = DoublePendulum(
-    #     DPParams(
-    #         l_1=0.4,
-    #         l_c1=0.2,
-    #         l_2=0.4,
-    #         l_c2=0.2
+    # reaction_wheel = ReactionWheel(
+    #     RWParams(
+    #         l_1=0.5,
+    #         l_c1=0.25,
+    #         m_1=1,
+    #         m_2=5,
+    #         r=0.1,
+    #         tau=lambda Q: 0
     #     )
     # )
 
-    sim = Simulator(
-        system=reaction_wheel,
-        duration=10,
-        fps=60
+    double_pendulum = DoublePendulum(
+        DPParams(
+            l_1=0.4,
+            l_c1=0.2,
+            l_2=0.4,
+            l_c2=0.2
+        )
     )
 
-    sim.run(np.array([0, np.pi / 2, 0, 0])).save("reaction_wheel.mp4")
+    sim = Simulator(
+        system=double_pendulum,
+        duration=60,
+        fps=165
+    )
+    
+    # sim.run(np.array([0, 0, 0, 0])).save("reaction_wheel.mp4")
+
+    sim.run(np.array([0, 0, 0, 0])).save("double_pendulum.mp4")

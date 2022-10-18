@@ -7,7 +7,7 @@ from sympy.physics.mechanics import dynamicsymbols
 
 from systems.system import Joint, Link, MatDict
 from systems.system import RoboticSystem as RS
-from systems.system import TCoordinate, VarDict, Vec, t
+from systems.system import TCoordinate, VarDict, Vec, g, t
 
 
 @dataclass
@@ -60,29 +60,28 @@ class DoublePendulum(RS):
 
         self.Q = sp.Matrix([self.theta[1], self.theta[2]]).reshape(2, 1)
 
-        self.T = self.compute_T(self.alpha, self.b, self.theta, self.d)
+        self.T: MatDict = self.compute_T(self.alpha, self.b, self.theta, self.d)
 
-        self.R = self.compute_R(self.T)
+        self.R: MatDict = self.compute_R(self.T)
 
-        self.D: dict[str, sp.Matrix] = {
+        self.D: MatDict = {
             "1->0": RS.extract_D(self.T["1->0"]),
-            "2->1": RS.extract_D(self.T["2->1"])
+            "2->1": RS.extract_D(self.T["2->1"]),
+            "2->0": RS.extract_D(self.T["2->0"])
         }
         self.D |= {
             "c1->1": sp.Matrix([self.l_c1, 0, 0]).reshape(3, 1),
-            "c2->2": sp.Matrix([self.l_c2, 0, 0]).reshape(3, 1),
-        }
-        self.D |= {
-            "c2->1": self.D["2->1"] + self.R["2->1"] * self.D["c2->2"],
+            "c2->2": sp.Matrix([self.l_c2, 0, 0]).reshape(3, 1)
         }
         self.D |= {
             "c1->0": self.D["1->0"] + self.R["1->0"] * self.D["c1->1"],
-            "c2->0": self.D["1->0"] + self.R["1->0"] * self.D["c2->1"],
+            "c2->0": self.D["2->0"] + self.R["2->0"] * self.D["c2->2"],
+            "c2->1": self.D["2->1"] + self.R["2->1"] * self.D["c2->2"]
         }
 
         self.P = sp.simplify(
-            (self.m[1] * RS.g_sym * self.D["c1->0"][1]) +
-            (self.m[2] * RS.g_sym * self.D["c2->0"][1])
+            (self.m[1] * g * self.D["c1->0"][1]) +  # type: ignore
+            (self.m[2] * g * self.D["c2->0"][1])  # type: ignore
         )
 
         self.J_v, self.J_omega = self.compute_J(self.R, self.D)
@@ -188,12 +187,12 @@ class DoublePendulum(RS):
 
         self.sol_theta_1dd: Callable[[float, float, float, float], float] = sp.lambdify(
             (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2]),
-            sol[self.theta_dd[1]].subs(RS.g_sym, 9.81)
+            sol[self.theta_dd[1]]
         )
 
         self.sol_theta_2dd: Callable[[float, float, float, float], float] = sp.lambdify(
             (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2]),
-            sol[self.theta_dd[2]].subs(RS.g_sym, 9.81)
+            sol[self.theta_dd[2]]
         )
 
     def deriv(self, t: Vec, Q: Vec) -> Vec:

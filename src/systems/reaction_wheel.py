@@ -7,7 +7,7 @@ from sympy.physics.mechanics import dynamicsymbols
 
 from systems.system import Joint, Link, MatDict
 from systems.system import RoboticSystem as RS
-from systems.system import TCoordinate, VarDict, Vec, t
+from systems.system import TCoordinate, VarDict, Vec, g, t
 
 
 @dataclass
@@ -81,8 +81,8 @@ class ReactionWheel(RS):
         }
 
         self.P = sp.simplify(
-            (self.m[1] * RS.g_sym * self.D["c1->0"][1]) +
-            (self.m[2] * RS.g_sym * self.D["c2->0"][1])
+            (self.m[1] * g * self.D["c1->0"][1]) +  # type: ignore
+            (self.m[2] * g * self.D["c2->0"][1])  # type: ignore
         )
 
         self.J_v, self.J_omega = self.compute_J(self.R, self.D)
@@ -165,7 +165,7 @@ class ReactionWheel(RS):
             M_d @ Q_d - sp.Rational(1, 2) *
             sp.Matrix.vstack(*[Q_d.T * M.diff(theta) * Q_d for theta in theta_dict.values()])
         )
-        
+
         return V
 
     @staticmethod
@@ -191,13 +191,13 @@ class ReactionWheel(RS):
 
         self.sol_theta_1dd: Callable[[float, float, float, float, float], float] = sp.lambdify(
             (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2], tau),
-            sol[self.theta_dd[1]].subs(RS.g_sym, 9.81),
+            sol[self.theta_dd[1]],
             "numpy"
         )
 
         self.sol_theta_2dd: Callable[[float, float, float, float, float], float] = sp.lambdify(
             (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2], tau),
-            sol[self.theta_dd[2]].subs(RS.g_sym, 9.81),
+            sol[self.theta_dd[2]],
             "numpy"
         )
 

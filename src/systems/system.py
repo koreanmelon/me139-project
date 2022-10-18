@@ -11,6 +11,9 @@ MatDict = dict[str, sp.Matrix]
 
 Vec = npt.NDArray[np.float64]
 
+g = 9.81  # gravitational acceleration (m/s^2)
+
+g_sym = sp.Symbol('g')  # gravity symbol
 t = sp.Symbol("t")  # time symbol
 
 
@@ -47,11 +50,6 @@ class RoboticSystem(ABC):
     Base class used to define a robotic system. Note that all computation
     related to the system is done in this class.
     """
-
-    # Constants
-    g = 9.81  # gravitational acceleration (m/s^2)
-
-    g_sym = sp.Symbol('g')  # gravitational acceleration (m/s^2)
 
     @property
     @abstractmethod
@@ -120,7 +118,7 @@ class RoboticSystem(ABC):
 
         return sp.simplify(sp.Matrix([
             [sp.cos(theta), -sp.sin(theta), 0, b],  # type: ignore
-            [sp.cos(alpha) * sp.sin(theta), sp.cos(alpha) * sp.cos(theta), -sp.sin(alpha), -d * sp.sin(alpha)]  # type: ignore
+            [sp.cos(alpha) * sp.sin(theta), sp.cos(alpha) * sp.cos(theta), -sp.sin(alpha), -d * sp.sin(alpha)],  # type: ignore
             [sp.sin(alpha) * sp.sin(theta), sp.sin(alpha) * sp.cos(theta), sp.cos(alpha), d * sp.cos(alpha)],  # type: ignore
             [0, 0, 0, 1]
         ]))
