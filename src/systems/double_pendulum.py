@@ -11,36 +11,34 @@ from systems.system import TCoordinate, VarDict, Vec, t
 
 
 @dataclass
-class RWParams:
+class DPParams:
     l_1: float = 1.0
     l_c1: float = 1.0
-    r: float = 1.0
+    l_2: float = 1.0
+    l_c2: float = 1.0
     m_1: float = 1.0
     m_2: float = 1.0
-    tau: Callable[[Vec], float] = lambda Q: 0.0
 
 
-class ReactionWheel(RS):
+class DoublePendulum(RS):
     """
-    A system with a single link and a reaction wheel attached to the end of the link.
+    A double pendulum.
     """
 
-    def __init__(self, params: RWParams) -> None:
+    def __init__(self, params: DPParams) -> None:
         super().__init__()
 
-        # Controls
-        self.tau = params.tau
-
         # System Parameters
-        self.l_1 = params.l_1       # rod length (m)
-        self.l_c1 = params.l_c1     # rod center of mass (m)
-        self.r = params.r           # reaction wheel radius (m)
+        self.l_1 = params.l_1       # rod 1 length (m)
+        self.l_c1 = params.l_c1     # rod 1 center of mass (m)
+        self.l_2 = params.l_2       # rod 2 length (m)
+        self.l_c2 = params.l_c2     # rod 2 center of mass (m)
 
         self.m = {1: params.m_1, 2: params.m_2}
 
         self.I_c = {
-            "1": RS.construct_I(self.m[1], self.l_1, "rod_center"),
-            "2": RS.construct_I(self.m[2], self.r, "disk_axis")
+            "1": RS.construct_I(self.m[1], self.l_1),
+            "2": RS.construct_I(self.m[2], self.l_2)
         }
 
         self.alpha = {1: 0, 2: 0}
@@ -72,8 +70,10 @@ class ReactionWheel(RS):
         }
         self.D |= {
             "c1->1": sp.Matrix([self.l_c1, 0, 0]).reshape(3, 1),
-            "c2->1": self.D["2->1"],
-            "c2->2": sp.zeros(3, 1),
+            "c2->2": sp.Matrix([self.l_c2, 0, 0]).reshape(3, 1),
+        }
+        self.D |= {
+            "c2->1": self.D["2->1"] + self.R["2->1"] * self.D["c2->2"],
         }
         self.D |= {
             "c1->0": self.D["1->0"] + self.R["1->0"] * self.D["c1->1"],
@@ -157,22 +157,20 @@ class ReactionWheel(RS):
         return M
 
     @staticmethod
-    def compute_V(M: sp.Matrix, Q: sp.Matrix, theta_dict: VarDict) -> sp.Matrix:
+    def compute_V(M: sp.Matrix, Q: sp.Matrix, theta: VarDict) -> sp.Matrix:
         M_d: sp.Matrix = M.diff(t)  # type: ignore
         Q_d: sp.Matrix = Q.diff(t)  # type: ignore
 
-        V = sp.simplify(
-            M_d @ Q_d - sp.Rational(1, 2) *
-            sp.Matrix.vstack(*[Q_d.T * M.diff(theta) * Q_d for theta in theta_dict.values()])
-        )
-        
-        return V
+        temp_mat_components = [Q_d.T @ M.diff(dtheta) @ Q_d for dtheta in theta.values()]
+
+        return sp.simplify(M_d @ Q_d - sp.Rational(1, 2) * sp.Matrix.vstack(*temp_mat_components))
 
     @staticmethod
-    def compute_G(P: sp.Expr, theta_dict: VarDict) -> sp.Matrix:
-        G = sp.simplify(
-            sp.Matrix([[P.diff(theta)] for theta in theta_dict.values()])
-        )
+    def compute_G(P: sp.Expr, theta: VarDict) -> sp.Matrix:
+        G = sp.simplify(sp.Matrix([
+            P.diff(theta[1]),
+            P.diff(theta[2])
+        ]).reshape(2, 1))
 
         return G
 
@@ -185,20 +183,17 @@ class ReactionWheel(RS):
         return torque
 
     def solve_system(self):
-        tau = sp.Symbol("tau")
-        system = [sp.Eq(self.torque[0], 0), sp.Eq(self.torque[1], tau)]
+        system = [sp.Eq(self.torque[0], 0), sp.Eq(self.torque[1], 0)]
         sol = sp.solve(system, [self.theta_dd[1], self.theta_dd[2]])
 
-        self.sol_theta_1dd: Callable[[float, float, float, float, float], float] = sp.lambdify(
-            (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2], tau),
-            sol[self.theta_dd[1]].subs(RS.g_sym, 9.81),
-            "numpy"
+        self.sol_theta_1dd: Callable[[float, float, float, float], float] = sp.lambdify(
+            (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2]),
+            sol[self.theta_dd[1]].subs(RS.g_sym, 9.81)
         )
 
-        self.sol_theta_2dd: Callable[[float, float, float, float, float], float] = sp.lambdify(
-            (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2], tau),
-            sol[self.theta_dd[2]].subs(RS.g_sym, 9.81),
-            "numpy"
+        self.sol_theta_2dd: Callable[[float, float, float, float], float] = sp.lambdify(
+            (self.theta[1], self.theta[2], self.theta_d[1], self.theta_d[2]),
+            sol[self.theta_dd[2]].subs(RS.g_sym, 9.81)
         )
 
     def deriv(self, t: Vec, Q: Vec) -> Vec:
@@ -207,8 +202,8 @@ class ReactionWheel(RS):
         theta_1d = Q[2]
         theta_2d = Q[3]
 
-        theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d, self.tau(Q))
-        theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d, self.tau(Q))
+        theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d)
+        theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d)
 
         return np.array([theta_1d, theta_2d, theta_1dd, theta_2dd])
 
@@ -224,8 +219,8 @@ class ReactionWheel(RS):
         l1 = Link(l1_start, l1_end, 2, 'b')
 
         l2_start = l1_end
-        l2_end = TCoordinate(l1_end.x + self.r * np.cos(theta_1 + theta_2),
-                             l1_end.y + self.r * np.sin(theta_1 + theta_2))
+        l2_end = TCoordinate(l1_end.x + self.l_2 * np.cos(theta_1 + theta_2),
+                             l1_end.y + self.l_2 * np.sin(theta_1 + theta_2))
         l2 = Link(l2_start, l2_end, 2, 'r', zorder=11)
 
         return [l1, l2]
@@ -246,10 +241,14 @@ class ReactionWheel(RS):
         j2 = Joint(
             self.l_1 * np.cos(theta_1),
             self.l_1 * np.sin(theta_1),
-            radius=self.r,
-            edgecolor='k',
-            facecolor='w',
+            color='k',
+            zorder=10
+        )
+        j3 = Joint(
+            self.l_1 * np.cos(theta_1) + self.l_2 * np.cos(theta_1 + theta_2),
+            self.l_1 * np.sin(theta_1) + self.l_2 * np.sin(theta_1 + theta_2),
+            color='k',
             zorder=10
         )
 
-        return [j1, j2]
+        return [j1, j2, j3]
