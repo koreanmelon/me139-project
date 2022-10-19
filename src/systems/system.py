@@ -80,6 +80,13 @@ class RoboticSystem(ABC):
     def compute_T(alpha: VarDict, b: VarDict, theta: VarDict, d: VarDict) -> MatDict:
         ...
 
+    # @abstractmethod
+    # def compute_R(self, indices: list[str]) -> None:
+    #     if self.T
+    #     self.R: MatDict = {}
+        
+    #     for index in indices:
+    #         self.R.setdefault(index, self.extract_R(T[index]))
     @staticmethod
     @abstractmethod
     def compute_R(T: MatDict) -> MatDict:
@@ -118,8 +125,10 @@ class RoboticSystem(ABC):
 
         return sp.simplify(sp.Matrix([
             [sp.cos(theta), -sp.sin(theta), 0, b],  # type: ignore
-            [sp.cos(alpha) * sp.sin(theta), sp.cos(alpha) * sp.cos(theta), -sp.sin(alpha), -d * sp.sin(alpha)],  # type: ignore
-            [sp.sin(alpha) * sp.sin(theta), sp.sin(alpha) * sp.cos(theta), sp.cos(alpha), d * sp.cos(alpha)],  # type: ignore
+            [sp.cos(alpha) * sp.sin(theta), sp.cos(alpha) * sp.cos(theta), - \
+             sp.sin(alpha), -d * sp.sin(alpha)],  # type: ignore
+            [sp.sin(alpha) * sp.sin(theta), sp.sin(alpha) * sp.cos(theta),
+             sp.cos(alpha), d * sp.cos(alpha)],  # type: ignore
             [0, 0, 0, 1]
         ]))
 
