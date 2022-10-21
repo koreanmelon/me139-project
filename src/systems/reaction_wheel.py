@@ -4,6 +4,7 @@ from typing import Callable
 import numpy as np
 import sympy as sp
 from sympy.physics.mechanics import dynamicsymbols
+from scipy.integrate import trapezoid
 
 from systems.system import Joint, Link, MatDict
 from systems.system import RoboticSystem as RS
@@ -30,6 +31,7 @@ class ReactionWheel(RS):
 
         # Controls
         self.tau = params.tau
+        self.err_vec = np.zeros(10)
 
         # System Parameters
         self.l_1 = params.l_1       # rod length (m)
@@ -81,8 +83,7 @@ class ReactionWheel(RS):
         }
 
         self.P = sp.simplify(
-            (self.m[1] * g * self.D["c1->0"][1]) +  # type: ignore
-            (self.m[2] * g * self.D["c2->0"][1])  # type: ignore
+            (self.m[1] * self.l_c1 + self.m[2] * self.l_1) * g * sp.sin(self.theta[1])  # type: ignore
         )
 
         self.J_v, self.J_omega = self.compute_J(self.R, self.D)
@@ -186,6 +187,7 @@ class ReactionWheel(RS):
 
     def solve_system(self):
         tau = sp.Symbol("tau")
+
         system = [sp.Eq(self.torque[0], 0), sp.Eq(self.torque[1], tau)]
         sol = sp.solve(system, [self.theta_dd[1], self.theta_dd[2]])
 
@@ -207,8 +209,45 @@ class ReactionWheel(RS):
         theta_1d = Q[2]
         theta_2d = Q[3]
 
-        theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d, self.tau(Q))
-        theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d, self.tau(Q))
+        def torque_func(Q):
+            theta_1 = Q[0]
+            theta_2 = Q[1]
+            theta_1d = Q[2]
+            theta_2d = Q[3]
+
+            T_u = 2.85
+            M = np.pi/2 - 1
+
+            K_p = 40  # ass values
+            K_i = 1
+            K_d = 1.2
+            # K_p = 0.05
+            # K_d = 0.05
+            # K_i = 0.05
+            # K_p = 0.85
+            # K_d = 0
+            # K_i = 0
+
+            err = theta_1 - np.pi/2
+
+            self.err_vec = np.append(self.err_vec, err)
+            self.err_vec = np.delete(self.err_vec, 0)
+
+            integ = trapezoid(self.err_vec, dx=0.01)
+
+            # if abs(integ) < 500:
+            #     print(integ)
+
+            t_added = (K_p * err) + (K_i * integ) + (K_d * theta_1d)
+
+            t_const = -g * (self.l_1 * self.m[2] + self.l_c1 * self.m[1]) * np.cos(theta_1)
+
+            return t_added
+
+        tau = torque_func(Q)
+
+        theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d, tau)
+        theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d, tau)
 
         return np.array([theta_1d, theta_2d, theta_1dd, theta_2dd])
 
@@ -240,6 +279,7 @@ class ReactionWheel(RS):
         j1 = Joint(
             np.zeros(t_len),
             np.zeros(t_len),
+            radius=0.02,
             color='k',
             zorder=10
         )
