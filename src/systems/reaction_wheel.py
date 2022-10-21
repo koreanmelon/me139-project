@@ -4,6 +4,7 @@ from typing import Callable
 import numpy as np
 import sympy as sp
 from sympy.physics.mechanics import dynamicsymbols
+from scipy.integrate import trapezoid
 
 from systems.system import Joint, Link, MatDict
 from systems.system import RoboticSystem as RS
@@ -30,9 +31,7 @@ class ReactionWheel(RS):
 
         # Controls
         self.tau = params.tau
-        self.err_hist = [0] * 50
-        self.prev_theta_1dd: float = 0
-        self.prev_theta_2dd: float = 0
+        self.err_vec = np.zeros(10)
 
         # System Parameters
         self.l_1 = params.l_1       # rod length (m)
@@ -210,61 +209,45 @@ class ReactionWheel(RS):
         theta_1d = Q[2]
         theta_2d = Q[3]
 
-        l_1 = 0.5
-        l_c1 = 0.25
-        m_1 = 1
-        m_2 = 5
-        r = 0.1
-        
-        def torque_func(Q, ttheta_1dd, ttheta_2dd):
+        def torque_func(Q):
             theta_1 = Q[0]
             theta_2 = Q[1]
             theta_1d = Q[2]
             theta_2d = Q[3]
-            K_p = 0.1  # ass values
-            K_d = 0.55
-            K_i = 0.38
-            # K_p = 0.1
-            # K_d = 0.1
-            # K_i = 0.1
+
+            T_u = 2.85
+            M = np.pi/2 - 1
+
+            K_p = 40  # ass values
+            K_i = 1
+            K_d = 1.2
+            # K_p = 0.05
+            # K_d = 0.05
+            # K_i = 0.05
             # K_p = 0.85
             # K_d = 0
             # K_i = 0
 
-
             err = theta_1 - np.pi/2
-            self.err_hist.append(err)
-            integ = np.trapz(self.err_hist[-50:], dx=0.01)
 
-            t_added = (K_p * err) + (K_d * theta_1d) + (K_i * integ)
+            self.err_vec = np.append(self.err_vec, err)
+            self.err_vec = np.delete(self.err_vec, 0)
 
-            num_const = m_2 * r**2
-            den_const = 2
+            integ = trapezoid(self.err_vec, dx=0.01)
 
-            term_1 = -12 * g * l_1 * m_2 * np.cos(theta_1)
-            term_2 = -12 * g * l_c1 * m_1 * np.cos(theta_1)
-            term_3 = l_1**2 * m_1 * ttheta_2dd
-            term_4 = 12 * l_1**2 * m_2 * ttheta_2dd**2
-            term_5 = 12 * l_c1**2 * m_1 * ttheta_2dd**2
+            # if abs(integ) < 500:
+            #     print(integ)
 
-            term_6 = l_1**2 * m_1
-            term_7 = 12 * l_1**2 * m_2
-            term_8 = 12 * l_c1**2 * m_1
-            term_9 = 6 * m_2 * r**2
+            t_added = (K_p * err) + (K_i * integ) + (K_d * theta_1d)
 
-            t_const = num_const * (term_1 + term_2 + term_3 + term_4 + term_5) / \
-                (den_const * (term_6 + term_7 + term_8 + term_9))
+            t_const = -g * (self.l_1 * self.m[2] + self.l_c1 * self.m[1]) * np.cos(theta_1)
 
-            return t_added + t_const
+            return t_added
 
-        tau = torque_func(Q, 0, 0)
-        # tau = 0
+        tau = torque_func(Q)
 
-        # theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d, tau)
-        # theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d, tau)
-        
-        theta_1dd = -(12*g*l_1*m_2*np.cos(theta_1) + 12*g*l_c1*m_1*np.cos(theta_1) + 12*tau)/(l_1**2*m_1 + 12*l_1**2*m_2 + 12*l_c1**2*m_1)
-        theta_2dd = 2*(6*g*l_1*m_2**2*r**2*np.cos(theta_1) + 6*g*l_c1*m_1*m_2*r**2*np.cos(theta_1) + l_1**2*m_1*tau + 12*l_1**2*m_2*tau + 12*l_c1**2*m_1*tau + 6*m_2*r**2*tau)/(m_2*r**2*(l_1**2*m_1 + 12*l_1**2*m_2 + 12*l_c1**2*m_1))
+        theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d, tau)
+        theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d, tau)
 
         return np.array([theta_1d, theta_2d, theta_1dd, theta_2dd])
 

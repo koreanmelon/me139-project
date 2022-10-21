@@ -1,9 +1,10 @@
+from dataclasses import dataclass
 from time import perf_counter
 
 import numpy as np
 from matplotlib.animation import FFMpegWriter, FuncAnimation
 from matplotlib.patches import Circle
-from matplotlib.pyplot import figure
+from matplotlib.pyplot import figure, show
 from scipy.integrate import solve_ivp
 
 from systems.double_pendulum import DoublePendulum, DPParams
@@ -12,23 +13,34 @@ from systems.system import RoboticSystem as RS
 from systems.system import Vec
 
 
+@dataclass
+class SimConfig:
+    system: RS
+    duration: int = 5
+    fps: int = 30
+    speed: int = 1
+    show: bool = False
+
+
 class Simulator:
     """
     Simulates an arbitrary robotic system and renders the animation.
     """
 
-    def __init__(self, system: RS, duration=5, fps=30, speed=1) -> None:
-        self.system: RS = system
+    def __init__(self, config: SimConfig) -> None:
+        self.system: RS = config.system
 
-        self.duration: int = duration                # (sec)
-        self.fps: int = fps                          # (frames/sec)
-        self.frames: int = self.fps * self.duration  # rendered frames (frames)
-        self.dt: float = 1 / self.fps                  # timestep (sec)
+        self.show = config.show
+
+        self.duration: int = config.duration            # (sec)
+        self.fps: int = config.fps                      # (frames/sec)
+        self.frames: int = self.fps * self.duration     # rendered frames (frames)
+        self.dt: float = 1 / self.fps                   # timestep (sec)
 
         self.t_range = np.linspace(0, self.duration, self.frames, endpoint=False)
         assert self.t_range[1] - self.t_range[0] == self.dt
 
-        self.writer = FFMpegWriter(fps=self.fps * speed)
+        self.writer = FFMpegWriter(fps=self.fps * config.speed)
 
     def run(self, Q_0: Vec = np.array([0, 0, 0, 0]), figsize: tuple[float, float] = (6, 6), dpi: float = 100):
         """
@@ -53,6 +65,9 @@ class Simulator:
             interval=self.dt * 1000,
             blit=True
         )
+
+        if self.show:
+            show()
 
         return self
 
@@ -140,6 +155,7 @@ class Simulator:
             fun=self.system.deriv,
             t_span=(0, self.duration),
             y0=Q_0,
+            method="DOP853",
             t_eval=self.t_range
         ).y
 
@@ -171,11 +187,14 @@ if __name__ == "__main__":
     # )
 
     sim = Simulator(
-        system=reaction_wheel,
-        duration=10,
-        fps=100
+        SimConfig(
+            system=reaction_wheel,
+            duration=10,
+            fps=165
+        )
     )
 
-    sim.run(np.array([1.4, 0, 0, 0])).save("reaction_wheel.mp4")
+    sim.run(np.array([1.5, 0, 0, 0])).save("reaction_wheel.mp4")
+    # sim.run(np.array([1.5, 0, 0, 0]))
 
     # sim.run(np.array([0, 0, 0, 0])).save("double_pendulum.mp4")
