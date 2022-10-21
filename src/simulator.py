@@ -1,5 +1,8 @@
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 from time import perf_counter
+from typing import Optional
 
 import numpy as np
 from matplotlib.animation import FFMpegWriter, FuncAnimation
@@ -7,7 +10,6 @@ from matplotlib.patches import Circle
 from matplotlib.pyplot import figure, show
 from scipy.integrate import solve_ivp
 
-from systems.double_pendulum import DoublePendulum, DPParams
 from systems.reaction_wheel import ReactionWheel, RWParams
 from systems.system import RoboticSystem as RS
 from systems.system import Vec
@@ -71,13 +73,18 @@ class Simulator:
 
         return self
 
-    def save(self, filename: str):
+    def save(self, filename: str = ""):
         """
         Save the animation to a file.
         """
 
+        filename = self.system.__class__.__name__ if len(filename) == 0 else filename
+
+        timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
+        Path(f"assets/outputs/{filename}").mkdir(parents=True, exist_ok=True)
+
         start_anim = perf_counter()
-        self.animation.save(f"assets/outputs/{filename}", writer=self.writer)
+        self.animation.save(f"assets/outputs/{filename}/{filename}_{timestamp}.mp4", writer=self.writer)
         end_anim = perf_counter()
 
         print(f"Animation time: {end_anim - start_anim:.3f} sec")
@@ -177,15 +184,6 @@ if __name__ == "__main__":
         )
     )
 
-    # double_pendulum = DoublePendulum(
-    #     DPParams(
-    #         l_1=0.4,
-    #         l_c1=0.2,
-    #         l_2=0.4,
-    #         l_c2=0.2
-    #     )
-    # )
-
     sim = Simulator(
         SimConfig(
             system=reaction_wheel,
@@ -194,7 +192,4 @@ if __name__ == "__main__":
         )
     )
 
-    sim.run(np.array([1.5, 0, 0, 0])).save("reaction_wheel.mp4")
-    # sim.run(np.array([1.5, 0, 0, 0]))
-
-    # sim.run(np.array([0, 0, 0, 0])).save("double_pendulum.mp4")
+    sim.run(np.array([1.5, 0, 0, 0])).save()
