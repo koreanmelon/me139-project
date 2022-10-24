@@ -1,8 +1,8 @@
+import argparse
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
-from typing import Optional
 
 import numpy as np
 from matplotlib.animation import FFMpegWriter, FuncAnimation
@@ -155,7 +155,9 @@ class Simulator:
 
     def simulate(self, Q_0: Vec) -> None:
         """
-        Simulate the system and store the results.
+        Simulate the system and store the results. Note that the method used to
+        solve the system of ODEs is crucial in determining the accuracy of the
+        model/system.
         """
 
         Q = solve_ivp(
@@ -173,6 +175,16 @@ class Simulator:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Simulate a robotic system.")
+    parser.add_argument("--save", action="store_true", help="Save the animation.")
+    parser.add_argument("--no-show", action="store_true", help="Do not show the animation.")
+    parser.add_argument("--system", type=str, default="ReactionWheel", help="The robotic system to simulate.")
+    parser.add_argument("--speed", type=int, default=1, help="Speed of the animation.")
+    parser.add_argument("--duration", type=int, default=5, help="Duration of the animation.")
+    parser.add_argument("--fps", type=int, default=30, help="Frames per second of the animation.")
+
+    args = parser.parse_args()
+
     reaction_wheel = ReactionWheel(
         RWParams(
             l_1=0.5,
@@ -192,4 +204,4 @@ if __name__ == "__main__":
         )
     )
 
-    sim.run(np.array([1.5, 0, 0, 0])).save()
+    sim.run(np.array([1, 0, 0, 0])).save()

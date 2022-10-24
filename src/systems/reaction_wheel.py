@@ -3,8 +3,8 @@ from typing import Callable
 
 import numpy as np
 import sympy as sp
-from sympy.physics.mechanics import dynamicsymbols
 from scipy.integrate import trapezoid
+from sympy.physics.mechanics import dynamicsymbols
 
 from systems.system import Joint, Link, MatDict
 from systems.system import RoboticSystem as RS
@@ -215,18 +215,13 @@ class ReactionWheel(RS):
             theta_1d = Q[2]
             theta_2d = Q[3]
 
-            T_u = 2.85
-            M = np.pi/2 - 1
-
-            K_p = 40  # ass values
-            K_i = 1
-            K_d = 1.2
-            # K_p = 0.05
-            # K_d = 0.05
-            # K_i = 0.05
-            # K_p = 0.85
-            # K_d = 0
-            # K_i = 0
+            # Arbitrarily chosen values
+            # K_p = 40
+            # K_i = 1
+            # K_d = 1.2
+            K_p = 5
+            K_i = 0.9
+            K_d = 1
 
             err = theta_1 - np.pi/2
 
@@ -242,7 +237,7 @@ class ReactionWheel(RS):
 
             t_const = -g * (self.l_1 * self.m[2] + self.l_c1 * self.m[1]) * np.cos(theta_1)
 
-            return t_added
+            return t_added + t_const
 
         tau = torque_func(Q)
 
