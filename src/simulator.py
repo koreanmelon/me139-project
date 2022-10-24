@@ -10,6 +10,7 @@ from matplotlib.patches import Circle
 from matplotlib.pyplot import figure, show
 from scipy.integrate import solve_ivp
 
+from systems.double_pendulum import DoublePendulum, DPParams
 from systems.reaction_wheel import ReactionWheel, RWParams
 from systems.system import RoboticSystem as RS
 from systems.system import Vec
@@ -176,32 +177,43 @@ class Simulator:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a robotic system.")
+    parser.add_argument("--system", "-s", type=str, required=True, help="The robotic system to simulate.")
+    parser.add_argument("--duration", "-D", type=int, default=5, help="Duration of the animation.")
+    parser.add_argument("--fps", "-F", type=int, default=30, help="Frames per second of the animation.")
+    parser.add_argument("--speed", "-S", type=int, default=1, help="Speed of the animation.")
     parser.add_argument("--save", action="store_true", help="Save the animation.")
     parser.add_argument("--no-show", action="store_true", help="Do not show the animation.")
-    parser.add_argument("--system", type=str, default="ReactionWheel", help="The robotic system to simulate.")
-    parser.add_argument("--speed", type=int, default=1, help="Speed of the animation.")
-    parser.add_argument("--duration", type=int, default=5, help="Duration of the animation.")
-    parser.add_argument("--fps", type=int, default=30, help="Frames per second of the animation.")
 
     args = parser.parse_args()
 
-    reaction_wheel = ReactionWheel(
-        RWParams(
-            l_1=0.5,
-            l_c1=0.25,
-            m_1=1,
-            m_2=5,
-            r=0.1,
-            tau=lambda Q: 0
+    if args.system.lower() == "reactionwheel":
+        system = ReactionWheel(
+            RWParams(
+                l_1=0.5,
+                l_c1=0.25,
+                m_1=1,
+                m_2=5,
+                r=0.1,
+                tau=lambda Q: 0
+            )
         )
-    )
+    elif args.system.lower() == "doublependulum":
+        system = DoublePendulum(DPParams())
+    else:
+        print("Please specify a system to simulate.")
+        exit(1)
 
     sim = Simulator(
         SimConfig(
-            system=reaction_wheel,
-            duration=10,
-            fps=165
+            system=system,
+            duration=args.duration,
+            fps=args.fps,
+            speed=args.speed,
+            show=not args.no_show
         )
     )
 
-    sim.run(np.array([1, 0, 0, 0])).save()
+    sim.run(np.array([1, 0, 0, 0]))
+
+    if args.save:
+        sim.save()
