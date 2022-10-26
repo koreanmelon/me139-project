@@ -11,6 +11,7 @@ from systems.reaction_wheel import ReactionWheel, RWParams
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a robotic system.")
     parser.add_argument("--system", "-s", type=str, required=True, help="The robotic system to simulate.")
+    parser.add_argument("--q0", "-q", type=float, nargs="+", required=True, help="Initial joint angles and velocities.")
     parser.add_argument("--duration", "-D", type=int, default=5, help="Duration of the animation.")
     parser.add_argument("--fps", "-F", type=int, default=30, help="Frames per second of the animation.")
     parser.add_argument("--speed", "-S", type=float, default=1.0, help="Speed of the animation.")
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     )
 
     start_sim = perf_counter()
-    sim.run(np.array([1.3, 0, 0, 0]))
+    sim.run(np.array(args.q0))
     end_sim = perf_counter()
 
     print(f"Simulation time: {end_sim - start_sim:.3f} sec")
@@ -65,4 +66,8 @@ if __name__ == "__main__":
     print(f"Animation time: {end_ani - start_ani:.3f} sec")
 
     if args.save:
+        start_save = perf_counter()
         ani.save(sim.system.__class__.__name__)
+        end_save = perf_counter()
+
+        print(f"Write time: {end_save - start_save:.3f} sec")

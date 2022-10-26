@@ -5,7 +5,8 @@ import numpy as np
 import sympy as sp
 from scipy.integrate import trapezoid
 
-from systems.system.system import CoordinateT, Link, LinkType
+from systems.system.link import CoordinateT, LinkType
+from systems.system.system import Link
 from systems.system.system import RoboticSystem as RS
 from systems.system.system import StyledJointT, StyledLinkT, Vec, g
 
@@ -134,7 +135,6 @@ class ReactionWheel(RS):
             np.zeros(t_len),
             np.zeros(t_len),
             radius=0.02,
-            color='k',
             zorder=10
         )
         j2 = StyledJointT(

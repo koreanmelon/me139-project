@@ -3,19 +3,19 @@ from typing import Callable
 
 import numpy as np
 import sympy as sp
-from sympy.physics.mechanics import dynamicsymbols
 
-from systems.system.system import Link, LinkType
+from systems.system.link import CoordinateT, LinkType
+from systems.system.system import Link
 from systems.system.system import RoboticSystem as RS
-from systems.system.system import StyledJointT, StyledLinkT, CoordinateT, Vec
+from systems.system.system import StyledJointT, StyledLinkT, Vec
 
 
 @dataclass
 class DPParams:
     l_1: float = 1.0
-    l_c1: float = 1.0
+    l_c1: float = 0.5
     l_2: float = 1.0
-    l_c2: float = 1.0
+    l_c2: float = 0.5
     m_1: float = 1.0
     m_2: float = 1.0
 
@@ -87,19 +87,16 @@ class DoublePendulum(RS):
         j1 = StyledJointT(
             np.zeros(t_len),
             np.zeros(t_len),
-            color='k',
             zorder=10
         )
         j2 = StyledJointT(
             self.l_1 * np.cos(theta_1),
             self.l_1 * np.sin(theta_1),
-            color='k',
             zorder=10
         )
         j3 = StyledJointT(
             self.l_1 * np.cos(theta_1) + self.l_2 * np.cos(theta_1 + theta_2),
             self.l_1 * np.sin(theta_1) + self.l_2 * np.sin(theta_1 + theta_2),
-            color='k',
             zorder=10
         )
 

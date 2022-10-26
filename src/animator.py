@@ -1,13 +1,14 @@
 from datetime import datetime
 from pathlib import Path
-from time import perf_counter
 
 import numpy as np
-from matplotlib.animation import FFMpegWriter, FuncAnimation
+from matplotlib.animation import ArtistAnimation, FFMpegWriter, FuncAnimation
+from matplotlib.artist import Artist
+from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
 from matplotlib.pyplot import figure, show
 
-from systems.system.system import StyledJointT, StyledLinkT
+from systems.system.link import StyledJointT, StyledLinkT
 
 
 class Animator:
@@ -18,6 +19,12 @@ class Animator:
     def __init__(self, links: list[StyledLinkT], joints: list[StyledJointT], show: bool = False, duration: int = 5, fps: int = 30, speed: float = 1.0) -> None:
         self.links = links
         self.joints = joints
+
+        self.window_x = sum([abs(max(link.end.x - link.start.x)) for link in links])
+        self.window_y = sum([abs(max(link.end.y - link.start.y)) for link in links])
+
+        self.window_x = max(self.window_x, self.window_y) + 0.2
+        self.window_y = self.window_x + 0.2
 
         self.show = show
 
@@ -38,7 +45,7 @@ class Animator:
 
         self.fig = figure(figsize=figsize, dpi=dpi)
         self.ax = self.fig.add_subplot(111)
-        self.artists = []
+        self.artists: list[Artist] = []
 
         self.animation = FuncAnimation(
             fig=self.fig,
@@ -62,11 +69,7 @@ class Animator:
         timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
         Path(f"assets/outputs/{filename}").mkdir(parents=True, exist_ok=True)
 
-        start_anim = perf_counter()
         self.animation.save(f"assets/outputs/{filename}/{filename}_{timestamp}.mp4", writer=self.writer)
-        end_anim = perf_counter()
-
-        print(f"Animation time: {end_anim - start_anim:.3f} sec")
 
         return self
 
@@ -74,39 +77,31 @@ class Animator:
         self.ax.clear()
 
         # Center the image on the fixed anchor point and ensure the axes are equal
-        self.ax.set_xlim(-1, 1)
-        self.ax.set_ylim(-1, 1)
+        self.ax.set_xlim(-self.window_x, self.window_x)
+        self.ax.set_ylim(-self.window_y, self.window_y)
         self.ax.set_aspect('equal', adjustable='box')
 
         for joint in self.joints:
-            if joint.edgecolor is not None and joint.facecolor is not None:
-                self.artists.append(self.ax.add_patch(
-                    Circle(
-                        (joint.x[0], joint.y[0]),
-                        radius=joint.radius,
-                        edgecolor=joint.edgecolor,
-                        facecolor=joint.facecolor,
-                        zorder=joint.zorder
-                    )
-                ))
-            else:
-                self.artists.append(self.ax.add_patch(
-                    Circle(
-                        (joint.x[0], joint.y[0]),
-                        radius=joint.radius,
-                        color=joint.color,
-                        zorder=joint.zorder
-                    )
-                ))
+            self.artists.append(self.ax.add_patch(
+                Circle(
+                    (joint.x[0], joint.y[0]),
+                    radius=joint.radius,
+                    edgecolor=joint.edgecolor,
+                    facecolor=joint.facecolor,
+                    zorder=joint.zorder
+                )
+            ))
 
         # Plot links
         for link in self.links:
-            self.artists.extend(self.ax.plot(
-                [link.start.x[0], link.end.x[0]],
-                [link.start.y[0], link.end.y[0]],
-                linewidth=link.linewidth,
-                color=link.color,
-                zorder=link.zorder
+            self.artists.append(self.ax.add_line(
+                Line2D(
+                    [link.start.x[0], link.end.x[0]],
+                    [link.start.y[0], link.end.y[0]],
+                    linewidth=link.linewidth,
+                    color=link.color,
+                    zorder=link.zorder
+                )
             ))
 
         return self.artists
@@ -124,9 +119,11 @@ class Animator:
 
         # Plot links
         for link in self.links:
-            self.artists[a_i].set_data(
-                [link.start.x[i], link.end.x[i]],
-                [link.start.y[i], link.end.y[i]]
+            self.artists[a_i].set(
+                data=[
+                    [link.start.x[i], link.end.x[i]],
+                    [link.start.y[i], link.end.y[i]]
+                ]
             )
             a_i += 1
 
