@@ -5,17 +5,17 @@ import numpy as np
 import sympy as sp
 from scipy.integrate import trapezoid
 
-from systems.system.link import CoordinateT, LinkType
-from systems.system.system import Link
-from systems.system.system import RoboticSystem as RS
-from systems.system.system import StyledJointT, StyledLinkT, Vec, g
+from .system.link import CoordinateT, LinkType
+from .system.system import Link
+from .system.system import RoboticSystem as RS
+from .system.system import StyledJointT, StyledLinkT, Vec, g
 
 
 @dataclass
 class RWParams:
     l_1: float = 1.0
-    l_c1: float = 1.0
-    r: float = 1.0
+    l_c1: float = 0.5
+    r: float = 0.5
     m_1: float = 1.0
     m_2: float = 1.0
 

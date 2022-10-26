@@ -4,10 +4,10 @@ from typing import Callable
 import numpy as np
 import sympy as sp
 
-from systems.system.link import CoordinateT, LinkType
-from systems.system.system import Link
-from systems.system.system import RoboticSystem as RS
-from systems.system.system import StyledJointT, StyledLinkT, Vec
+from .system.link import CoordinateT, LinkType
+from .system.system import Link
+from .system.system import RoboticSystem as RS
+from .system.system import StyledJointT, StyledLinkT, Vec
 
 
 @dataclass

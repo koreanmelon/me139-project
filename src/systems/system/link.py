@@ -3,7 +3,8 @@ from enum import Enum
 from typing import Optional
 
 import sympy as sp
-from systems.system.types import Vec
+
+from .types import Vec
 
 
 @dataclass

@@ -2,12 +2,11 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-from matplotlib.animation import ArtistAnimation, FFMpegWriter, FuncAnimation
+from matplotlib.animation import FFMpegWriter, FuncAnimation
 from matplotlib.artist import Artist
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
 from matplotlib.pyplot import figure, show
-
 from systems.system.link import StyledJointT, StyledLinkT
 
 
