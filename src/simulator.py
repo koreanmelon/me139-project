@@ -12,8 +12,8 @@ from scipy.integrate import solve_ivp
 
 from systems.double_pendulum import DoublePendulum, DPParams
 from systems.reaction_wheel import ReactionWheel, RWParams
-from systems.system import RoboticSystem as RS
-from systems.system import Vec
+from systems.system.system import RoboticSystem as RS
+from systems.system.system import Vec
 
 
 @dataclass
@@ -21,7 +21,7 @@ class SimConfig:
     system: RS
     duration: int = 5
     fps: int = 30
-    speed: int = 1
+    speed: float = 1.0
     show: bool = False
 
 
@@ -43,7 +43,7 @@ class Simulator:
         self.t_range = np.linspace(0, self.duration, self.frames, endpoint=False)
         assert self.t_range[1] - self.t_range[0] == self.dt
 
-        self.writer = FFMpegWriter(fps=self.fps * config.speed)
+        self.writer = FFMpegWriter(fps=int(self.fps * config.speed))
 
     def run(self, Q_0: Vec = np.array([0, 0, 0, 0]), figsize: tuple[float, float] = (6, 6), dpi: float = 100):
         """
@@ -171,8 +171,8 @@ class Simulator:
 
         theta_t_vec = Q[:self.system.n]
 
-        self.links = self.system.links(theta_t_vec)
-        self.joints = self.system.joints(theta_t_vec)
+        self.links = self.system.link_positions(theta_t_vec)
+        self.joints = self.system.joint_positions(theta_t_vec)
 
 
 if __name__ == "__main__":
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     parser.add_argument("--system", "-s", type=str, required=True, help="The robotic system to simulate.")
     parser.add_argument("--duration", "-D", type=int, default=5, help="Duration of the animation.")
     parser.add_argument("--fps", "-F", type=int, default=30, help="Frames per second of the animation.")
-    parser.add_argument("--speed", "-S", type=int, default=1, help="Speed of the animation.")
+    parser.add_argument("--speed", "-S", type=float, default=1.0, help="Speed of the animation.")
     parser.add_argument("--save", action="store_true", help="Save the animation.")
     parser.add_argument("--no-show", action="store_true", help="Do not show the animation.")
 
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         )
     )
 
-    sim.run(np.array([1, 0, 0, 0]))
+    sim.run(np.array([1.5, 0, 0, 0]))
 
     if args.save:
         sim.save()
