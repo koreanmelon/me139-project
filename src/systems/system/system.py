@@ -11,7 +11,7 @@ from sympy.physics.mechanics import dynamicsymbols
 VarDict = dict[int, Any]
 MatDict = dict[str, sp.Matrix]
 
-Vec = Mat = npt.NDArray[np.float64]
+Vec = Mat = npt.NDArray[np.float_]
 
 g = 9.81  # gravitational acceleration (m/s^2)
 
@@ -151,18 +151,30 @@ class RoboticSystem(ABC):
 
     @abstractmethod
     def solve_system(self) -> None:
+        """
+        Solve the system of equations.
+        """
         ...
 
     @abstractmethod
     def deriv(self, t: Vec, Q: Vec) -> Vec:
+        """
+        Compute the derivative of the state vector.
+        """
         ...
 
     @abstractmethod
     def link_positions(self, theta_t_vec: list[Vec]) -> list[StyledLinkT]:
+        """
+        Given a list of angle vectors, returns a list of link positions as a function of time.
+        """
         ...
 
     @abstractmethod
     def joint_positions(self, theta_t_vec: list[Vec]) -> list[StyledJointT]:
+        """
+        Given a list of angle vectors, returns a list of joint positions as a function of time.
+        """
         ...
 
     def compute_T(self) -> None:
