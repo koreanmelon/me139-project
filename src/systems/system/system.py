@@ -20,31 +20,31 @@ t = sp.Symbol("t")  # time symbol
 
 
 @dataclass
-class TCoordinate:
+class CoordinateT:
     x: Vec
     y: Vec
 
 
 @dataclass
-class TLine:
-    start: TCoordinate
-    end: TCoordinate
+class LineT:
+    start: CoordinateT
+    end: CoordinateT
 
 
 @dataclass
-class Joint(TCoordinate):
+class StyledJointT(CoordinateT):
     edgecolor: Optional[str] = None
     facecolor: Optional[str] = None
     color: str = 'k'
     radius: float = 0.05
-    zorder: int = 1
+    zorder: float = 1.0
 
 
 @dataclass
-class StyledLink(TLine):
+class StyledLinkT(LineT):
     linewidth: float = 1
     color: str = "black"
-    zorder: int = 1
+    zorder: float = 1.0
 
 
 class LinkType(Enum):
@@ -54,12 +54,12 @@ class LinkType(Enum):
     CUSTOM = 3
 
 
-class RLink:
+class Link:
     """
     Represents a link in a kinematic chain.
     """
 
-    def __init__(self, m: sp.Symbol, l: sp.Symbol, l_c: sp.Symbol, type: LinkType, I: sp.Matrix = sp.eye(3)) -> None:
+    def __init__(self, m, l, l_c, type: LinkType) -> None:
         """
         Args:
             m (float): mass of the link
@@ -72,10 +72,10 @@ class RLink:
         self.l = l
         self.l_c = l_c
         self.type = type
-        self.I = RLink.__construct_I(m, l, type, I)
+        self.I = Link.__construct_I(m, l, type)
 
     @staticmethod
-    def __construct_I(m: sp.Symbol, l: sp.Symbol, type: LinkType, I: sp.Matrix) -> sp.Matrix:
+    def __construct_I(m: sp.Symbol, l: sp.Symbol, type: LinkType) -> sp.Matrix:
         """
         Computes the moment of inertia of a link about its center of mass
         given its mass and length.
@@ -88,8 +88,7 @@ class RLink:
         elif type == LinkType.DISK:
             val = sp.Rational(1, 2) * m * l**2
         else:
-            assert I is not None, f"Custom link type requires a moment of inertia"
-            return I
+            raise NotImplementedError("Moment of inertia for custom link type not implemented.")
 
         return sp.diag(val, val, val)
 
@@ -99,13 +98,13 @@ class RoboticSystem(ABC):
     Base class used to define a robotic system.
     """
 
-    def __init__(self, links: list[tuple[Any, Any, Any, Any]]) -> None:
+    def __init__(self, *links: Link) -> None:
         """
         Args:
             n (int): the number of links in the system
         """
 
-        self.links = [RLink(*link) for link in links]
+        self.links = links
         self.n = len(links)
 
         self.alpha: VarDict = {}
@@ -159,11 +158,11 @@ class RoboticSystem(ABC):
         ...
 
     @abstractmethod
-    def link_positions(self, theta_t_vec: list[Vec]) -> list[StyledLink]:
+    def link_positions(self, theta_t_vec: list[Vec]) -> list[StyledLinkT]:
         ...
 
     @abstractmethod
-    def joint_positions(self, theta_t_vec: list[Vec]) -> list[Joint]:
+    def joint_positions(self, theta_t_vec: list[Vec]) -> list[StyledJointT]:
         ...
 
     def compute_T(self) -> None:
@@ -175,7 +174,7 @@ class RoboticSystem(ABC):
             self.T[f"{i}->{i - 1}"] = self.construct_T(self.alpha[i], self.b[i], self.theta[i], self.d[i])
 
         for i in range(2, self.n + 1):
-            self.T[f"{i}->{0}"] = self.T[f"{i}->{i - 1}"] * self.T[f"{i - 1}->{0}"]
+            self.T[f"{i}->{0}"] = sp.simplify(self.T[f"{i - 1}->{0}"] * self.T[f"{i}->{i - 1}"])
 
     def compute_R(self) -> None:
         """

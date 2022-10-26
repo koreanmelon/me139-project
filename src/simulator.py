@@ -193,8 +193,7 @@ if __name__ == "__main__":
                 l_c1=0.25,
                 m_1=1,
                 m_2=5,
-                r=0.1,
-                tau=lambda Q: 0
+                r=0.1
             )
         )
     elif args.system.lower() == "doublependulum":
@@ -213,7 +212,7 @@ if __name__ == "__main__":
         )
     )
 
-    sim.run(np.array([1.5, 0, 0, 0]))
+    sim.run(np.array([1.3, 0, 0, 0]))
 
     if args.save:
         sim.save()

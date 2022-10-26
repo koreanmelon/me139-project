@@ -5,9 +5,9 @@ import numpy as np
 import sympy as sp
 from scipy.integrate import trapezoid
 
-from systems.system.system import Joint, LinkType
+from systems.system.system import CoordinateT, Link, LinkType
 from systems.system.system import RoboticSystem as RS
-from systems.system.system import StyledLink, TCoordinate, Vec, g
+from systems.system.system import StyledJointT, StyledLinkT, Vec, g
 
 
 @dataclass
@@ -17,7 +17,6 @@ class RWParams:
     r: float = 1.0
     m_1: float = 1.0
     m_2: float = 1.0
-    tau: Callable[[Vec], float] = lambda Q: 0.0
 
 
 class ReactionWheel(RS):
@@ -26,13 +25,22 @@ class ReactionWheel(RS):
     """
 
     def __init__(self, params: RWParams) -> None:
-        super().__init__([
-            (params.m_1, params.l_1, params.l_c1, LinkType.ROD),
-            (params.m_2, params.r, 0, LinkType.DISK)
-        ])
+        super().__init__(
+            Link(
+                m=params.m_1,
+                l=params.l_1,
+                l_c=params.l_c1,
+                type=LinkType.ROD
+            ),
+            Link(
+                m=params.m_2,
+                l=params.r,
+                l_c=0,
+                type=LinkType.DISK
+            )
+        )
 
         # Controls
-        self.tau = params.tau
         self.err_vec = np.zeros(10)
 
         # System Parameters
@@ -40,7 +48,8 @@ class ReactionWheel(RS):
         self.l_c1 = params.l_c1     # rod center of mass (m)
         self.r = params.r           # reaction wheel radius (m)
 
-        self.m = {1: params.m_1, 2: params.m_2}
+        self.m_1 = params.m_1
+        self.m_2 = params.m_2
 
     def solve_system(self):
         tau = sp.Symbol("tau")
@@ -66,77 +75,69 @@ class ReactionWheel(RS):
         theta_1d = Q[2]
         theta_2d = Q[3]
 
-        def torque_func(Q):
-            theta_1 = Q[0]
-            theta_2 = Q[1]
-            theta_1d = Q[2]
-            theta_2d = Q[3]
-
-            # Arbitrarily chosen values
-            # K_p = 40
-            # K_i = 1
-            # K_d = 1.2
-            K_p = 5
-            K_i = 0.9
-            K_d = 1
-
-            err = theta_1 - np.pi/2
-
-            self.err_vec = np.append(self.err_vec, err)
-            self.err_vec = np.delete(self.err_vec, 0)
-
-            integ = trapezoid(self.err_vec, dx=0.01)
-
-            # if abs(integ) < 500:
-            #     print(integ)
-
-            t_added = (K_p * err) + (K_i * integ) + (K_d * theta_1d)
-
-            t_const = -g * (self.l_1 * self.m[2] + self.l_c1 * self.m[1]) * np.cos(theta_1)
-
-            return t_added + t_const
-
-        tau = torque_func(Q)
-        # tau = 0
+        tau = self.torque_func(Q)
 
         theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d, tau)
         theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d, tau)
 
         return np.array([theta_1d, theta_2d, theta_1dd, theta_2dd])
 
-    def link_positions(self, theta_t_vec: list[Vec]) -> list[StyledLink]:
+    def torque_func(self, Q):
+        theta_1 = Q[0]
+        theta_2 = Q[1]
+        theta_1d = Q[2]
+        theta_2d = Q[3]
+
+        # Arbitrarily chosen values
+        K_p = 5
+        K_i = 0.9
+        K_d = 1
+
+        err = theta_1 - np.pi/2
+        self.err_vec = np.append(self.err_vec, err)
+        self.err_vec = np.delete(self.err_vec, 0)
+
+        integ = trapezoid(self.err_vec, dx=0.01)
+
+        t_added = (K_p * err) + (K_i * integ) + (K_d * theta_1d)
+
+        t_const = -g * (self.l_c1 * self.m_1 + self.l_1 * self.m_2) * np.cos(theta_1)
+
+        return t_added + t_const
+
+    def link_positions(self, theta_t_vec: list[Vec]) -> list[StyledLinkT]:
         assert len(theta_t_vec) == 2, "This system only has two links."
 
         theta_1, theta_2 = theta_t_vec
 
         t_len = theta_1.size
 
-        l1_start = TCoordinate(np.zeros(t_len), np.zeros(t_len))
-        l1_end = TCoordinate(self.l_1 * np.cos(theta_1), self.l_1 * np.sin(theta_1))
-        l1 = StyledLink(l1_start, l1_end, 2, 'b')
+        l1_start = CoordinateT(np.zeros(t_len), np.zeros(t_len))
+        l1_end = CoordinateT(self.l_1 * np.cos(theta_1), self.l_1 * np.sin(theta_1))
+        l1 = StyledLinkT(l1_start, l1_end, 2, 'b')
 
         l2_start = l1_end
-        l2_end = TCoordinate(l1_end.x + self.r * np.cos(theta_1 + theta_2),
+        l2_end = CoordinateT(l1_end.x + self.r * np.cos(theta_1 + theta_2),
                              l1_end.y + self.r * np.sin(theta_1 + theta_2))
-        l2 = StyledLink(l2_start, l2_end, 2, 'r', zorder=11)
+        l2 = StyledLinkT(l2_start, l2_end, 2, 'r', zorder=11)
 
         return [l1, l2]
 
-    def joint_positions(self, theta_t_vec: list[Vec]) -> list[Joint]:
+    def joint_positions(self, theta_t_vec: list[Vec]) -> list[StyledJointT]:
         assert len(theta_t_vec) == 2, "This system only has two links."
 
         theta_1, theta_2 = theta_t_vec
 
         t_len = theta_1.size
 
-        j1 = Joint(
+        j1 = StyledJointT(
             np.zeros(t_len),
             np.zeros(t_len),
             radius=0.02,
             color='k',
             zorder=10
         )
-        j2 = Joint(
+        j2 = StyledJointT(
             self.l_1 * np.cos(theta_1),
             self.l_1 * np.sin(theta_1),
             radius=self.r,

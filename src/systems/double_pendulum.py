@@ -5,9 +5,9 @@ import numpy as np
 import sympy as sp
 from sympy.physics.mechanics import dynamicsymbols
 
-from systems.system.system import Joint, LinkType, MatDict
+from systems.system.system import Link, LinkType
 from systems.system.system import RoboticSystem as RS
-from systems.system.system import StyledLink, TCoordinate, VarDict, Vec, g, t
+from systems.system.system import StyledJointT, StyledLinkT, CoordinateT, Vec
 
 
 @dataclass
@@ -26,7 +26,7 @@ class DoublePendulum(RS):
     """
 
     def __init__(self, params: DPParams) -> None:
-        super().__init__([(1, 1, 0.5, LinkType.ROD), (1, 1, 0.5, LinkType.ROD)])
+        super().__init__(Link(1, 1, 0.5, LinkType.ROD), Link(1, 1, 0.5, LinkType.ROD))
 
         # System Parameters
         self.l_1 = params.l_1       # rod 1 length (m)
@@ -59,44 +59,44 @@ class DoublePendulum(RS):
 
         return np.array([theta_1d, theta_2d, theta_1dd, theta_2dd])
 
-    def link_positions(self, theta_t_vec: list[Vec]) -> list[StyledLink]:
+    def link_positions(self, theta_t_vec: list[Vec]) -> list[StyledLinkT]:
         assert len(theta_t_vec) == 2, "This system only has two links."
 
         theta_1, theta_2 = theta_t_vec
 
         t_len = theta_1.size
 
-        l1_start = TCoordinate(np.zeros(t_len), np.zeros(t_len))
-        l1_end = TCoordinate(self.l_1 * np.cos(theta_1), self.l_1 * np.sin(theta_1))
-        l1 = StyledLink(l1_start, l1_end, 2, 'b')
+        l1_start = CoordinateT(np.zeros(t_len), np.zeros(t_len))
+        l1_end = CoordinateT(self.l_1 * np.cos(theta_1), self.l_1 * np.sin(theta_1))
+        l1 = StyledLinkT(l1_start, l1_end, 2, 'b')
 
         l2_start = l1_end
-        l2_end = TCoordinate(l1_end.x + self.l_2 * np.cos(theta_1 + theta_2),
+        l2_end = CoordinateT(l1_end.x + self.l_2 * np.cos(theta_1 + theta_2),
                              l1_end.y + self.l_2 * np.sin(theta_1 + theta_2))
-        l2 = StyledLink(l2_start, l2_end, 2, 'r', zorder=11)
+        l2 = StyledLinkT(l2_start, l2_end, 2, 'r', zorder=11)
 
         return [l1, l2]
 
-    def joint_positions(self, theta_t_vec: list[Vec]) -> list[Joint]:
+    def joint_positions(self, theta_t_vec: list[Vec]) -> list[StyledJointT]:
         assert len(theta_t_vec) == 2, "This system only has two links."
 
         theta_1, theta_2 = theta_t_vec
 
         t_len = theta_1.size
 
-        j1 = Joint(
+        j1 = StyledJointT(
             np.zeros(t_len),
             np.zeros(t_len),
             color='k',
             zorder=10
         )
-        j2 = Joint(
+        j2 = StyledJointT(
             self.l_1 * np.cos(theta_1),
             self.l_1 * np.sin(theta_1),
             color='k',
             zorder=10
         )
-        j3 = Joint(
+        j3 = StyledJointT(
             self.l_1 * np.cos(theta_1) + self.l_2 * np.cos(theta_1 + theta_2),
             self.l_1 * np.sin(theta_1) + self.l_2 * np.sin(theta_1 + theta_2),
             color='k',
