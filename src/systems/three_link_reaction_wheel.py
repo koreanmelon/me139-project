@@ -25,9 +25,9 @@ class TLRWParams:
     l_3: float = 0.1524 / 2
     l_c3: float = 0.125
     r: float = 0.05
-    m_1: float = 0.5
-    m_2: float = 0.5
-    m_3: float = 0.5
+    m_1: float = 1 / 3
+    m_2: float = 1 / 3
+    m_3: float = 1 / 3
     m_w: float = 0.5
 
 
@@ -64,12 +64,16 @@ class TLRW(RS):
             sp.Eq(self.torque[2], tau_2),
             sp.Eq(self.torque[3], tau_3)
         ]
-        self.sol = sp.solve(system, [
-            self.theta_dd[1],
-            self.theta_dd[2],
-            self.theta_dd[3],
-            self.theta_dd[4]
-        ])
+        self.sol = sp.solve(
+            system,
+            [
+                self.theta_dd[1],
+                self.theta_dd[2],
+                self.theta_dd[3],
+                self.theta_dd[4]
+            ],
+            simplify=True
+        )
 
         self.sol_theta_1dd: SolFunc = sp.lambdify(
             (
@@ -77,7 +81,7 @@ class TLRW(RS):
                 self.theta_d[1], self.theta_d[2], self.theta_d[3], self.theta_d[4],
                 tau_1, tau_2, tau_3
             ),
-            sp.trigsimp(self.sol[self.theta_dd[1]]),
+            self.sol[self.theta_dd[1]],
             "numpy"
         )
 
@@ -87,7 +91,7 @@ class TLRW(RS):
                 self.theta_d[1], self.theta_d[2], self.theta_d[3], self.theta_d[4],
                 tau_1, tau_2, tau_3
             ),
-            sp.trigsimp(self.sol[self.theta_dd[2]]),
+            self.sol[self.theta_dd[2]],
             "numpy"
         )
 
@@ -97,7 +101,7 @@ class TLRW(RS):
                 self.theta_d[1], self.theta_d[2], self.theta_d[3], self.theta_d[4],
                 tau_1, tau_2, tau_3
             ),
-            sp.trigsimp(self.sol[self.theta_dd[3]]),
+            self.sol[self.theta_dd[3]],
             "numpy"
         )
 
@@ -107,7 +111,7 @@ class TLRW(RS):
                 self.theta_d[1], self.theta_d[2], self.theta_d[3], self.theta_d[4],
                 tau_1, tau_2, tau_3
             ),
-            sp.trigsimp(self.sol[self.theta_dd[4]]),
+            self.sol[self.theta_dd[4]],
             "numpy"
         )
 

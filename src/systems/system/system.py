@@ -60,17 +60,59 @@ class RoboticSystem(ABC):
         self.G: sp.Matrix = sp.zeros(self.n, 1)
         self.torque: sp.Matrix = sp.zeros(self.n, 1)
 
+        perf_T_start = perf_counter()
         self.compute_T()
+        perf_T_end = perf_counter()
+
+        print(f"Time to compute T: {perf_T_end - perf_T_start:.3f} sec")
+
+        perf_R_start = perf_counter()
         self.compute_R()
+        perf_R_end = perf_counter()
+
+        print(f"Time to compute R: {perf_R_end - perf_R_start:.3f} sec")
+
+        perf_D_start = perf_counter()
         self.compute_D()
+        perf_D_end = perf_counter()
+
+        print(f"Time to compute D: {perf_D_end - perf_D_start:.3f} sec")
+
+        perf_J_start = perf_counter()
         self.compute_J()
+        perf_J_end = perf_counter()
 
+        print(f"Time to compute J: {perf_J_end - perf_J_start:.3f} sec")
+
+        perf_M_start = perf_counter()
         self.compute_M()
-        self.compute_V()
-        self.compute_G()
-        self.compute_torque()
+        perf_M_end = perf_counter()
 
+        print(f"Time to compute M: {perf_M_end - perf_M_start:.3f} sec")
+
+        perf_V_start = perf_counter()
+        self.compute_V()
+        perf_V_end = perf_counter()
+
+        print(f"Time to compute V: {perf_V_end - perf_V_start:.3f} sec")
+
+        perf_G_start = perf_counter()
+        self.compute_G()
+        perf_G_end = perf_counter()
+
+        print(f"Time to compute G: {perf_G_end - perf_G_start:.3f} sec")
+
+        perf_torque_start = perf_counter()
+        self.compute_torque()
+        perf_torque_end = perf_counter()
+
+        print(f"Time to compute torque: {perf_torque_end - perf_torque_start:.3f} sec")
+
+        perf_solve_start = perf_counter()
         self.solve_system()
+        perf_solve_end = perf_counter()
+
+        print(f"Time to solve system: {perf_solve_end - perf_solve_start:.3f} sec")
 
     @abstractmethod
     def solve_system(self) -> None:
@@ -110,7 +152,7 @@ class RoboticSystem(ABC):
 
         for i in range(2, self.n + 1):
             for j in range(0, i - 1):
-                self.T[f"{i}->{j}"] = sp.trigsimp(self.T[f"{i - 1}->{j}"] * self.T[f"{i}->{i - 1}"])
+                self.T[f"{i}->{j}"] = sp.simplify(self.T[f"{i - 1}->{j}"] * self.T[f"{i}->{i - 1}"])
 
     def compute_R(self) -> None:
         """
@@ -133,7 +175,7 @@ class RoboticSystem(ABC):
             self.D[f"c{i + 1}->{i + 1}"] = vec
 
             for j in range(i + 1):
-                self.D[f"c{i + 1}->{j}"] = sp.trigsimp(self.D[f"{i + 1}->{j}"] + self.R[f"{i + 1}->{j}"] * vec)
+                self.D[f"c{i + 1}->{j}"] = sp.simplify(self.D[f"{i + 1}->{j}"] + self.R[f"{i + 1}->{j}"] * vec)
 
     def compute_J(self) -> None:
         """
@@ -148,12 +190,12 @@ class RoboticSystem(ABC):
                     cols.append(sp.zeros(3, 1))
                 else:
                     cols.append(
-                        sp.trigsimp(
+                        sp.simplify(
                             self.R[f"{j}->0"].extract([0, 1, 2], [2]).cross(self.R[f"{j}->0"] * self.D[f"c{i}->{j}"])
                         )
                     )
 
-            self.J_v[f"{i}"] = sp.trigsimp(sp.Matrix.hstack(*cols))
+            self.J_v[f"{i}"] = sp.simplify(sp.Matrix.hstack(*cols))
 
         for i in range(1, self.n + 1):
             cols = []
@@ -164,7 +206,7 @@ class RoboticSystem(ABC):
                 else:
                     cols.append(self.R[f"{j}->0"].extract([0, 1, 2], [2]))
 
-            self.J_w[f"{i}"] = sp.trigsimp(sp.Matrix.hstack(*cols))
+            self.J_w[f"{i}"] = sp.simplify(sp.Matrix.hstack(*cols))
 
     def compute_M(self) -> None:
         """
@@ -176,7 +218,7 @@ class RoboticSystem(ABC):
             angular = self.J_w[f"{i + 1}"].T * link.I * self.J_w[f"{i + 1}"]
             self.M += linear + angular
 
-        self.M = sp.trigsimp(self.M)
+        self.M = sp.simplify(self.M)
         self.M_d = self.M.diff(t)  # type: ignore
 
     def compute_V(self) -> None:
@@ -184,7 +226,7 @@ class RoboticSystem(ABC):
         Compute the Coriolis and centrifugal matrix.
         """
 
-        self.V = sp.trigsimp(
+        self.V = sp.simplify(
             self.M_d * self.Q_d - sp.Rational(1, 2) *
             sp.Matrix.vstack(*[self.Q_d.T * self.M.diff(theta) * self.Q_d for theta in self.theta.values()])
         )
@@ -199,16 +241,16 @@ class RoboticSystem(ABC):
         for i, link in enumerate(self.links):
             expr += link.m * g * self.D[f"c{i + 1}->{0}"][1]
 
-        self.P = sp.trigsimp(expr)
+        self.P = sp.simplify(expr)
 
-        self.G = sp.trigsimp(sp.Matrix([[self.P.diff(theta)] for theta in self.theta.values()]))
+        self.G = sp.simplify(sp.Matrix([[self.P.diff(theta)] for theta in self.theta.values()]))
 
     def compute_torque(self) -> None:
         """
         Compute the torque matrix.
         """
 
-        self.torque = sp.trigsimp(self.M * self.Q_dd + self.V + self.G)
+        self.torque = sp.simplify(self.M * self.Q_dd + self.V + self.G)
 
     @staticmethod
     def construct_T(alpha, b, theta, d) -> sp.Matrix:
@@ -216,7 +258,7 @@ class RoboticSystem(ABC):
         Creates a transformation matrix for given values of alpha, b, theta, and d.
         """
 
-        return sp.trigsimp(sp.Matrix([
+        return sp.simplify(sp.Matrix([
             [sp.cos(theta), sp.Mul(-1, sp.sin(theta)), 0, b],
             [sp.Mul(sp.cos(alpha), sp.sin(theta)), sp.Mul(sp.cos(alpha), sp.cos(theta)),
              sp.Mul(-1, sp.sin(alpha)), -d * sp.sin(alpha)],
