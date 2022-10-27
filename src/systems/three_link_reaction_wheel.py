@@ -18,16 +18,16 @@ SolFunc = Callable[
 
 @dataclass
 class TLRWParams:
-    l_1: float = 0.1524
+    l_1: float = 0.1524  # 6 inches
     l_c1: float = 0.1524 / 2
-    l_2: float = 0.1778
+    l_2: float = 0.1778  # 7 inches
     l_c2: float = 0.1778 / 2
-    l_3: float = 0.1524 / 2
+    l_3: float = 0.1524 / 2  # 6 inches
     l_c3: float = 0.125
-    r: float = 0.05
-    m_1: float = 0.5
-    m_2: float = 0.5
-    m_3: float = 0.5
+    r: float = 0.05  # 2 inches
+    m_1: float = 1/3  # kg
+    m_2: float = 1/3  # kg
+    m_3: float = 1/3  # kg
     m_w: float = 0.5
 
 
@@ -77,7 +77,7 @@ class TLRW(RS):
                 self.theta_d[1], self.theta_d[2], self.theta_d[3], self.theta_d[4],
                 tau_1, tau_2, tau_3
             ),
-            sp.trigsimp(self.sol[self.theta_dd[1]]),
+            sp.simplify(self.sol[self.theta_dd[1]]),
             "numpy"
         )
 
@@ -87,7 +87,7 @@ class TLRW(RS):
                 self.theta_d[1], self.theta_d[2], self.theta_d[3], self.theta_d[4],
                 tau_1, tau_2, tau_3
             ),
-            sp.trigsimp(self.sol[self.theta_dd[2]]),
+            sp.simplify(self.sol[self.theta_dd[2]]),
             "numpy"
         )
 
@@ -97,7 +97,7 @@ class TLRW(RS):
                 self.theta_d[1], self.theta_d[2], self.theta_d[3], self.theta_d[4],
                 tau_1, tau_2, tau_3
             ),
-            sp.trigsimp(self.sol[self.theta_dd[3]]),
+            sp.simplify(self.sol[self.theta_dd[3]]),
             "numpy"
         )
 
@@ -107,7 +107,7 @@ class TLRW(RS):
                 self.theta_d[1], self.theta_d[2], self.theta_d[3], self.theta_d[4],
                 tau_1, tau_2, tau_3
             ),
-            sp.trigsimp(self.sol[self.theta_dd[4]]),
+            sp.simplify(self.sol[self.theta_dd[4]]),
             "numpy"
         )
 
@@ -172,8 +172,8 @@ class TLRW(RS):
 
         t_const = t_l2 + t_l3 + t_l4
 
-        return -t_const
-        # return 0
+        # return -t_const
+        return 0
 
     def torque2_func(self, Q):
         theta_1 = Q[0]
@@ -193,8 +193,8 @@ class TLRW(RS):
 
         t_const = t_l3 + t_l4
 
-        return t_const
-        # return 0
+        # return t_const
+        return 0
 
     def torque3_func(self, Q):
         theta_1 = Q[0]
