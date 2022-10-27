@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from time import perf_counter
 
 import sympy as sp
+from metrics.metrics import Metrics, MetricsConfig
 from sympy.physics.mechanics import dynamicsymbols
 
 from .link import Link, StyledJointT, StyledLinkT
@@ -18,7 +18,7 @@ class RoboticSystem(ABC):
     Base class used to define a robotic system.
     """
 
-    def __init__(self, *links: Link) -> None:
+    def __init__(self, *links: Link, metrics: Metrics = Metrics(MetricsConfig(progressive=True))) -> None:
         """
         Args:
             n (int): the number of links in the system
@@ -60,59 +60,11 @@ class RoboticSystem(ABC):
         self.G: sp.Matrix = sp.zeros(self.n, 1)
         self.torque: sp.Matrix = sp.zeros(self.n, 1)
 
-        perf_T_start = perf_counter()
-        self.compute_T()
-        perf_T_end = perf_counter()
-
-        print(f"Time to compute T: {perf_T_end - perf_T_start:.3f} sec")
-
-        perf_R_start = perf_counter()
-        self.compute_R()
-        perf_R_end = perf_counter()
-
-        print(f"Time to compute R: {perf_R_end - perf_R_start:.3f} sec")
-
-        perf_D_start = perf_counter()
-        self.compute_D()
-        perf_D_end = perf_counter()
-
-        print(f"Time to compute D: {perf_D_end - perf_D_start:.3f} sec")
-
-        perf_J_start = perf_counter()
-        self.compute_J()
-        perf_J_end = perf_counter()
-
-        print(f"Time to compute J: {perf_J_end - perf_J_start:.3f} sec")
-
-        perf_M_start = perf_counter()
-        self.compute_M()
-        perf_M_end = perf_counter()
-
-        print(f"Time to compute M: {perf_M_end - perf_M_start:.3f} sec")
-
-        perf_V_start = perf_counter()
-        self.compute_V()
-        perf_V_end = perf_counter()
-
-        print(f"Time to compute V: {perf_V_end - perf_V_start:.3f} sec")
-
-        perf_G_start = perf_counter()
-        self.compute_G()
-        perf_G_end = perf_counter()
-
-        print(f"Time to compute G: {perf_G_end - perf_G_start:.3f} sec")
-
-        perf_torque_start = perf_counter()
-        self.compute_torque()
-        perf_torque_end = perf_counter()
-
-        print(f"Time to compute torque: {perf_torque_end - perf_torque_start:.3f} sec")
-
-        perf_solve_start = perf_counter()
-        self.solve_system()
-        perf_solve_end = perf_counter()
-
-        print(f"Time to solve system: {perf_solve_end - perf_solve_start:.3f} sec")
+        metrics.measure_perf([
+            self.compute_T, self.compute_R, self.compute_D,
+            self.compute_J, self.compute_M, self.compute_V,
+            self.compute_G, self.compute_torque, self.solve_system
+        ])
 
     @abstractmethod
     def solve_system(self) -> None:

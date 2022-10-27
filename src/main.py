@@ -21,20 +21,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("Simulating...")
-    start_sim = perf_counter()
+    print("Solving the system...")
+    start_solve = perf_counter()
 
     try:
         if args.system.lower() == "reactionwheel":
-            system = ReactionWheel(
-                RWParams(
-                    l_1=0.5,
-                    l_c1=0.25,
-                    m_1=1,
-                    m_2=5,
-                    r=0.1
-                )
-            )
+            system = ReactionWheel(RWParams())
         elif args.system.lower() == "doublependulum":
             system = DoublePendulum(DPParams())
         elif args.system.lower() == "tlrw":
@@ -42,14 +34,24 @@ if __name__ == "__main__":
         else:
             print("Please specify a system to simulate.")
             exit(1)
+    except Exception as e:
+        end_solve = perf_counter()
+        print(f"System solving failed after {end_solve - start_solve:.3f} seconds.\n")
+        raise e
 
-        sim = Simulator(
-            system=system,
-            duration=args.duration,
-            fps=args.fps
+    end_solve = perf_counter()
 
-        )
+    print(f"System solved in {end_solve - start_solve:.3f} seconds.\n")
 
+    sim = Simulator(
+        system=system,
+        duration=args.duration,
+        fps=args.fps
+
+    )
+
+    start_sim = perf_counter()
+    try:
         sim.run(np.array(args.q0))
     except Exception as e:
         end_sim = perf_counter()

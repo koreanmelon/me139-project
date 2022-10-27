@@ -22,8 +22,8 @@ class TLRWParams:
     l_c1: float = 0.1524 / 2
     l_2: float = 0.1778  # 7 inches
     l_c2: float = 0.1778 / 2
-    l_3: float = 0.1524 / 2  # 6 inches
-    l_c3: float = 0.125
+    l_3: float = 0.1524  # 6 inches
+    l_c3: float = 0.1524 / 2
     r: float = 0.05  # 2 inches
     m_1: float = 1/3  # kg
     m_2: float = 1/3  # kg
@@ -267,8 +267,8 @@ class TLRW(RS):
         l3 = StyledLinkT(l3_start, l3_end, 2, 'b')
 
         l4_start = l3_end
-        l4_end = CoordinateT(l3_end.x + self.r * np.cos(theta_1 + theta_2 + theta_3 + theta_4),
-                             l3_end.y + self.r * np.sin(theta_1 + theta_2 + theta_3 + theta_4))
+        l4_end = CoordinateT(l4_start.x + self.r * np.cos(theta_1 + theta_2 + theta_3 + theta_4),
+                             l4_start.y + self.r * np.sin(theta_1 + theta_2 + theta_3 + theta_4))
         l4 = StyledLinkT(l4_start, l4_end, 2, 'r', zorder=11)
 
         return [l1, l2, l3, l4]
@@ -283,19 +283,19 @@ class TLRW(RS):
         j1 = StyledJointT(
             np.zeros(t_len),
             np.zeros(t_len),
-            radius=0.02,
+            radius=0.01,
             zorder=10
         )
         j2 = StyledJointT(
             self.l_1 * np.cos(theta_1),
             self.l_1 * np.sin(theta_1),
-            radius=0.02,
+            radius=0.01,
             zorder=10
         )
         j3 = StyledJointT(
             j2.x + self.l_2 * np.cos(theta_1 + theta_2),
             j2.y + self.l_2 * np.sin(theta_1 + theta_2),
-            radius=0.02,
+            radius=0.01,
             zorder=10
         )
         j4 = StyledJointT(
