@@ -28,11 +28,11 @@ if __name__ == "__main__":
         if args.system.lower() == "reactionwheel":
             system = ReactionWheel(
                 RWParams(
-                    l_1=0.5,
-                    l_c1=0.25,
+                    l_1=0.25,
+                    l_c1=0.125,
                     m_1=1,
-                    m_2=5,
-                    r=0.1
+                    m_2=0.5,
+                    r=0.076
                 )
             )
         elif args.system.lower() == "doublependulum":

@@ -22,8 +22,8 @@ class Animator:
         self.window_x = sum([abs(max(link.end.x - link.start.x)) for link in links])
         self.window_y = sum([abs(max(link.end.y - link.start.y)) for link in links])
 
-        self.window_x = max(self.window_x, self.window_y) + 0.2
-        self.window_y = self.window_x + 0.2
+        self.window_x = max(self.window_x, self.window_y) + 0.1
+        self.window_y = self.window_x
 
         self.show = show
 
