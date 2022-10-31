@@ -125,12 +125,12 @@ class TLRW(RS):
         theta_3d = Q[6]
         theta_4d = Q[7]
 
-        torque_1 = 0
-        torque_2 = 0
-        torque_3 = 0
-        # torque_1 = self.torque1_func(Q)
-        # torque_2 = self.torque2_func(Q)
-        # torque_3 = self.torque3_func(Q)
+        # torque_1 = 0
+        # torque_2 = 0
+        # torque_3 = 0
+        torque_1 = self.torque1_func(Q)
+        torque_2 = self.torque2_func(Q)
+        torque_3 = self.torque3_func(Q)
 
         theta_1dd: float = self.sol_theta_1dd(
             theta_1, theta_2, theta_3, theta_4,
@@ -176,8 +176,8 @@ class TLRW(RS):
 
         t_const = t_l2 + t_l3 + t_l4
 
-        # return -t_const
-        return 0
+        return -t_const
+        # return 0
 
     def torque2_func(self, Q):
         theta_1 = Q[0]
@@ -197,8 +197,8 @@ class TLRW(RS):
 
         t_const = t_l3 + t_l4
 
-        # return t_const
-        return 0
+        return t_const
+        # return 0
 
     def torque3_func(self, Q):
         theta_1 = Q[0]
@@ -242,8 +242,8 @@ class TLRW(RS):
         t_const = self.m_w * g * vec[0] + (self.m_1 + self.m_2 + self.m_3) * g * vec[0] / 2
         # t_const = t_l1 + t_l2 + t_l3 + t_l4
 
-        # return t_added - t_const
-        return 0
+        return t_added - t_const
+        # return 0
 
     def link_positions(self, theta_t_vec: list[Vec]) -> list[StyledLinkT]:
         assert len(theta_t_vec) == 4, "A system with four links requires four angles."
