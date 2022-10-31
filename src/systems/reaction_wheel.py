@@ -43,6 +43,7 @@ class ReactionWheel(RS):
 
         # Controls
         self.err_vec = np.zeros(10)
+        self.out_vals = {}
 
         # System Parameters
         self.l_1 = params.l_1       # rod length (m)
@@ -70,13 +71,15 @@ class ReactionWheel(RS):
             "numpy"
         )
 
-    def deriv(self, t: Vec, Q: Vec) -> Vec:
+    def deriv(self, t: float, Q: Vec) -> Vec:
         theta_1 = Q[0]
         theta_2 = Q[1]
         theta_1d = Q[2]
         theta_2d = Q[3]
 
         tau = self.torque_func(Q)
+
+        self.out_vals[t] = (tau, theta_2d)
 
         theta_1dd: float = self.sol_theta_1dd(theta_1, theta_2, theta_1d, theta_2d, tau)
         theta_2dd: float = self.sol_theta_2dd(theta_1, theta_2, theta_1d, theta_2d, tau)
@@ -90,9 +93,9 @@ class ReactionWheel(RS):
         theta_2d = Q[3]
 
         # Arbitrarily chosen values
-        K_p = 5
-        K_i = 0.9
-        K_d = 1
+        K_p = 0.6 * 0.15
+        K_i = 1.2 * 0.15 / 5.5
+        K_d = 0.075 * 0.15 * 5.5
 
         err = theta_1 - np.pi/2
         self.err_vec = np.append(self.err_vec, err)
@@ -134,7 +137,7 @@ class ReactionWheel(RS):
         j1 = StyledJointT(
             np.zeros(t_len),
             np.zeros(t_len),
-            radius=0.02,
+            radius=0.01,
             zorder=10
         )
         j2 = StyledJointT(
