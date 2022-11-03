@@ -5,6 +5,7 @@ import numpy as np
 import sympy as sp
 from scipy.integrate import trapezoid
 
+from ..metrics.metrics import Metrics, MetricsConfig
 from .system.link import CoordinateT, LinkType
 from .system.system import Link
 from .system.system import RoboticSystem as RS
@@ -18,6 +19,7 @@ class RWParams:
     r: float = 0.5
     m_1: float = 1.0
     m_2: float = 1.0
+    metrics: Metrics = Metrics(MetricsConfig(progressive=True))
 
 
 class ReactionWheel(RS):
@@ -38,7 +40,8 @@ class ReactionWheel(RS):
                 l=params.r,
                 l_c=0,
                 type=LinkType.DISK
-            )
+            ),
+            metrics=params.metrics
         )
 
         # Controls
