@@ -3,13 +3,12 @@ from typing import Callable
 
 import numpy as np
 import sympy as sp
-from metrics.metrics import Metrics, MetricsConfig
 from scipy.integrate import trapezoid
-
-from .system.link import CoordinateT, LinkType
-from .system.system import Link
-from .system.system import RoboticSystem as RS
-from .system.system import StyledJointT, StyledLinkT, Vec, g
+from src.metrics.metrics import Metrics, MetricsConfig
+from src.systems.system.link import CoordinateT, LinkType
+from src.systems.system.system import Link
+from src.systems.system.system import RoboticSystem as RS
+from src.systems.system.system import StyledJointT, StyledLinkT, Vec, g
 
 
 @dataclass

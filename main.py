@@ -6,11 +6,11 @@ from time import perf_counter
 
 import numpy as np
 
-from animator.animator import Animator
-from simulator.simulator import Simulator
-from systems.double_pendulum import DoublePendulum, DPParams
-from systems.reaction_wheel import ReactionWheel, RWParams
-from systems.three_link_reaction_wheel import TLRW, TLRWParams
+from src.animator.animator import Animator
+from src.simulator.simulator import Simulator
+from src.systems.double_pendulum import DoublePendulum, DPParams
+from src.systems.reaction_wheel import ReactionWheel, RWParams
+from src.systems.three_link_reaction_wheel import TLRW, TLRWParams
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a robotic system.")

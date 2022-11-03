@@ -7,7 +7,7 @@ from matplotlib.artist import Artist
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
 from matplotlib.pyplot import figure, show
-from systems.system.link import StyledJointT, StyledLinkT
+from src.systems.system.link import StyledJointT, StyledLinkT
 
 
 class Animator:
