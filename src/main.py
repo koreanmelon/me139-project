@@ -1,6 +1,7 @@
 import argparse
 import pickle
 from datetime import datetime
+from pathlib import Path
 from time import perf_counter
 
 import numpy as np
@@ -53,19 +54,20 @@ if __name__ == "__main__":
 
     print(f"System solved in {end_solve - start_solve:.3f} seconds.\n")
 
-    timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
-    with open(f"cache/{system.__class__.__name__}_{timestamp}", "wb") as outfile:
-        start_serialize = perf_counter()
-        pickle.dump(system, outfile)
-        end_serialize = perf_counter()
+    # timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
+    # Path(f"cache/{system.__class__.__name__}_{timestamp}").touch(exist_ok=True)
+    # with open(f"cache/{system.__class__.__name__}_{timestamp}", "wb") as outfile:
+    #     start_serialize = perf_counter()
+    #     pickle.dump(system, outfile)
+    #     end_serialize = perf_counter()
 
-    print(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
+    # print(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
 
     sim = Simulator(
         system=system,
         duration=args.duration,
         fps=args.fps,
-        method="Radau"
+        method="DOP853"
     )
 
     start_sim = perf_counter()

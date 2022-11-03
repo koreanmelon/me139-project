@@ -3,9 +3,9 @@ from typing import Callable
 
 import numpy as np
 import sympy as sp
+from metrics.metrics import Metrics, MetricsConfig
 from scipy.integrate import trapezoid
 
-from ..metrics.metrics import Metrics, MetricsConfig
 from .system.link import CoordinateT, LinkType
 from .system.system import Link
 from .system.system import RoboticSystem as RS

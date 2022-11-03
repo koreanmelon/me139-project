@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.integrate import solve_ivp
-
-from ..systems.system.system import RoboticSystem as RS
-from ..systems.system.system import Vec
+from systems.system.system import RoboticSystem as RS
+from systems.system.system import Vec
 
 
 class Simulator:
