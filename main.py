@@ -1,10 +1,10 @@
 import argparse
-import pickle
-from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 
+import dill as pickle
 import numpy as np
+import sympy as sp
 
 from src.animator.animator import Animator
 from src.simulator.simulator import Simulator
@@ -39,7 +39,9 @@ if __name__ == "__main__":
                 )
             )
         elif args.system.lower() == "doublependulum":
-            system = DoublePendulum(DPParams())
+            with open(f"cache/DoublePendulum", "rb") as infile:
+                system = pickle.load(infile)
+            # system = DoublePendulum(DPParams())
         elif args.system.lower() == "tlrw":
             system = TLRW(TLRWParams())
         else:
@@ -54,14 +56,13 @@ if __name__ == "__main__":
 
     print(f"System solved in {end_solve - start_solve:.3f} seconds.\n")
 
-    # timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
-    # Path(f"cache/{system.__class__.__name__}_{timestamp}").touch(exist_ok=True)
-    # with open(f"cache/{system.__class__.__name__}_{timestamp}", "wb") as outfile:
-    #     start_serialize = perf_counter()
-    #     pickle.dump(system, outfile)
-    #     end_serialize = perf_counter()
+    Path(f"cache/{system.__class__.__name__}").touch(exist_ok=True)
+    with open(f"cache/{system.__class__.__name__}", "wb") as outfile:
+        start_serialize = perf_counter()
+        pickle.dump(system, outfile)
+        end_serialize = perf_counter()
 
-    # print(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
+    print(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
 
     sim = Simulator(
         system=system,

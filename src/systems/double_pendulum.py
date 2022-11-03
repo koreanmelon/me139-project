@@ -3,11 +3,10 @@ from typing import Callable
 
 import numpy as np
 import sympy as sp
-
-from .system.link import CoordinateT, LinkType
-from .system.system import Link
-from .system.system import RoboticSystem as RS
-from .system.system import StyledJointT, StyledLinkT, Vec
+from src.systems.system.link import CoordinateT, LinkType
+from src.systems.system.system import Link
+from src.systems.system.system import RoboticSystem as RS
+from src.systems.system.system import StyledJointT, StyledLinkT, Vec
 
 
 @dataclass
@@ -26,13 +25,45 @@ class DoublePendulum(RS):
     """
 
     def __init__(self, params: DPParams) -> None:
-        super().__init__(Link(1, 1, 0.5, LinkType.ROD), Link(1, 1, 0.5, LinkType.ROD))
+        super().__init__(
+            Link(
+                params.l_1,
+                params.l_c1,
+                params.m_1,
+                LinkType.ROD
+            ),
+            Link(
+                params.l_2,
+                params.l_c2,
+                params.m_2,
+                LinkType.ROD
+            )
+        )
 
         # System Parameters
         self.l_1 = params.l_1       # rod 1 length (m)
         self.l_c1 = params.l_c1     # rod 1 center of mass (m)
         self.l_2 = params.l_2       # rod 2 length (m)
         self.l_c2 = params.l_c2     # rod 2 center of mass (m)
+
+    def __getstate__(self):
+        return super().__getstate__() | {
+            "l_1": self.l_1,
+            "l_c1": self.l_c1,
+            "l_2": self.l_2,
+            "l_c2": self.l_c2,
+            "sol_theta_1dd": self.sol_theta_1dd,
+            "sol_theta_2dd": self.sol_theta_2dd
+        }
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.l_1 = state["l_1"]
+        self.l_c1 = state["l_c1"]
+        self.l_2 = state["l_2"]
+        self.l_c2 = state["l_c2"]
+        self.sol_theta_1dd = state["sol_theta_1dd"]
+        self.sol_theta_2dd = state["sol_theta_2dd"]
 
     def solve_system(self):
         system = [sp.Eq(self.torque[0], 0), sp.Eq(self.torque[1], 0)]

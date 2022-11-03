@@ -66,6 +66,56 @@ class RoboticSystem(ABC):
             self.compute_G, self.compute_torque, self.solve_system
         ])
 
+    def __getstate__(self):
+        return {
+            "links": self.links,
+            "n": self.n,
+            "alpha": self.alpha,
+            "b": self.b,
+            "d": self.d,
+            "theta": {k: str(v) for k, v in self.theta.items()},
+            "theta_d": {k: str(v) for k, v in self.theta_d.items()},
+            "theta_dd": {k: str(v) for k, v in self.theta_dd.items()},
+            "Q": str(self.Q),
+            "Q_d": str(self.Q_d),
+            "Q_dd": str(self.Q_dd),
+            "T": {k: str(v) for k, v in self.T.items()},
+            "R": {k: str(v) for k, v in self.R.items()},
+            "D": {k: str(v) for k, v in self.D.items()},
+            "J_v": {k: str(v) for k, v in self.J_v.items()},
+            "J_w": {k: str(v) for k, v in self.J_w.items()},
+            "P": str(self.P),
+            "M": str(self.M),
+            "M_d": str(self.M_d),
+            "V": str(self.V),
+            "G": str(self.G),
+            "torque": str(self.torque)
+        }
+
+    def __setstate__(self, state):
+        self.links = state["links"]
+        self.n = state["n"]
+        self.alpha = state["alpha"]
+        self.b = state["b"]
+        self.d = state["d"]
+        self.theta = {k: sp.sympify(v) for k, v in state["theta"].items()}
+        self.theta_d = {k: sp.sympify(v) for k, v in state["theta_d"].items()}
+        self.theta_dd = {k: sp.sympify(v) for k, v in state["theta_dd"].items()}
+        self.Q = sp.sympify(state["Q"])
+        self.Q_d = sp.sympify(state["Q_d"])
+        self.Q_dd = sp.sympify(state["Q_dd"])
+        self.T = {k: sp.sympify(v) for k, v in state["T"].items()}
+        self.R = {k: sp.sympify(v) for k, v in state["R"].items()}
+        self.D = {k: sp.sympify(v) for k, v in state["D"].items()}
+        self.J_v = {k: sp.sympify(v) for k, v in state["J_v"].items()}
+        self.J_w = {k: sp.sympify(v) for k, v in state["J_w"].items()}
+        self.P = sp.sympify(state["P"])
+        self.M = sp.sympify(state["M"])
+        self.M_d = sp.sympify(state["M_d"])
+        self.V = sp.sympify(state["V"])
+        self.G = sp.sympify(state["G"])
+        self.torque = sp.sympify(state["torque"])
+
     @abstractmethod
     def solve_system(self) -> None:
         """

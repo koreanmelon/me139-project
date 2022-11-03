@@ -4,11 +4,11 @@ from typing import Callable
 import numpy as np
 import sympy as sp
 from scipy.integrate import trapezoid
-
-from .system.link import CoordinateT, Link, LinkType, StyledJointT, StyledLinkT
-from .system.system import RoboticSystem as RS
-from .system.system import g
-from .system.types import Vec
+from src.systems.system.link import (CoordinateT, Link, LinkType, StyledJointT,
+                                     StyledLinkT)
+from src.systems.system.system import RoboticSystem as RS
+from src.systems.system.system import g
+from src.systems.system.types import Vec
 
 SolFunc = Callable[
     [float, float, float, float, float, float, float, float, float, float, float],
