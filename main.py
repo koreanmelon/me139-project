@@ -67,7 +67,7 @@ if __name__ == "__main__":
     #     pickle.dump(system, outfile)
     #     end_serialize = perf_counter()
 
-    vprint(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
+    # vprint(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
 
     sim = Simulator(
         system=system,
