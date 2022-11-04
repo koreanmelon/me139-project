@@ -1,15 +1,16 @@
 import argparse
 import pickle
 from datetime import datetime
+from pathlib import Path
 from time import perf_counter
 
 import numpy as np
 
-from animator.animator import Animator
-from simulator.simulator import Simulator
-from systems.double_pendulum import DoublePendulum, DPParams
-from systems.reaction_wheel import ReactionWheel, RWParams
-from systems.three_link_reaction_wheel import TLRW, TLRWParams
+from src.animator.animator import Animator
+from src.simulator.simulator import Simulator
+from src.systems.double_pendulum import DoublePendulum, DPParams
+from src.systems.reaction_wheel import ReactionWheel, RWParams
+from src.systems.three_link_reaction_wheel import TLRW, TLRWParams
 
 
 if __name__ == "__main__":
@@ -59,11 +60,12 @@ if __name__ == "__main__":
 
     vprint(f"System solved in {end_solve - start_solve:.3f} seconds.\n")
 
-    timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
-    with open(f"cache/{system.__class__.__name__}_{timestamp}", "wb") as outfile:
-        start_serialize = perf_counter()
-        pickle.dump(system, outfile)
-        end_serialize = perf_counter()
+    # timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
+    # Path(f"cache/{system.__class__.__name__}_{timestamp}").touch(exist_ok=True)
+    # with open(f"cache/{system.__class__.__name__}_{timestamp}", "wb") as outfile:
+    #     start_serialize = perf_counter()
+    #     pickle.dump(system, outfile)
+    #     end_serialize = perf_counter()
 
     vprint(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
 
@@ -71,7 +73,7 @@ if __name__ == "__main__":
         system=system,
         duration=args.duration,
         fps=args.fps,
-        method="Radau"
+        method="DOP853"
     )
 
     start_sim = perf_counter()

@@ -7,7 +7,7 @@ from matplotlib.artist import Artist
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
 from matplotlib.pyplot import figure, show
-from systems.system.link import StyledJointT, StyledLinkT
+from src.systems.system.link import StyledJointT, StyledLinkT
 
 
 class Animator:
@@ -66,9 +66,9 @@ class Animator:
         """
 
         timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
-        Path(f"assets/outputs/{filename}").mkdir(parents=True, exist_ok=True)
+        Path(f"outputs/videos/{filename}").mkdir(parents=True, exist_ok=True)
 
-        self.animation.save(f"assets/outputs/{filename}/{filename}_{timestamp}.mp4", writer=self.writer)
+        self.animation.save(f"outputs/videos/{filename}/{filename}_{timestamp}.mp4", writer=self.writer)
 
         return self
 

@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
 import sympy as sp
+from src.metrics.metrics import Metrics, MetricsConfig
 from sympy.physics.mechanics import dynamicsymbols
 
-from ...metrics.metrics import Metrics, MetricsConfig
 from .link import Link, StyledJointT, StyledLinkT
 from .types import MatDict, VarDict, Vec
 

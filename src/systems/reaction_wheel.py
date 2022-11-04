@@ -4,11 +4,11 @@ from typing import Callable
 import numpy as np
 import sympy as sp
 from scipy.integrate import trapezoid
-
-from .system.link import CoordinateT, LinkType
-from .system.system import Link
-from .system.system import RoboticSystem as RS
-from .system.system import StyledJointT, StyledLinkT, Vec, g
+from src.metrics.metrics import Metrics, MetricsConfig
+from src.systems.system.link import CoordinateT, LinkType
+from src.systems.system.system import Link
+from src.systems.system.system import RoboticSystem as RS
+from src.systems.system.system import StyledJointT, StyledLinkT, Vec, g
 
 
 @dataclass
@@ -18,6 +18,7 @@ class RWParams:
     r: float = 0.5
     m_1: float = 1.0
     m_2: float = 1.0
+    metrics: Metrics = Metrics(MetricsConfig(progressive=True))
 
 
 class ReactionWheel(RS):
@@ -38,7 +39,8 @@ class ReactionWheel(RS):
                 l=params.r,
                 l_c=0,
                 type=LinkType.DISK
-            )
+            ),
+            metrics=params.metrics
         )
 
         # Controls
