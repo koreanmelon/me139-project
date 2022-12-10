@@ -42,6 +42,6 @@ The project is organized as follows:
 
 The `src/` directory is organized as follows:
 
-- `simulator/` contains the simulator code which solves an IVP for a given system
-- `animation/` contains the code that renders and saves the simulation
+- `animation/` handles rendering and saving the simulation
+- `simulator/` solves an IVP for a given system
 - `systems/` contains the code that defines the system dynamics for various robots
