@@ -79,7 +79,8 @@ class ReactionWheel(RS):
         theta_1d = Q[2]
         theta_2d = Q[3]
 
-        tau = self.torque_func(Q)
+        # tau = self.torque_func(Q)
+        tau = 0
 
         self.out_vals[t] = (tau, theta_2d)
 
