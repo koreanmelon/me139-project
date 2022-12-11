@@ -9,13 +9,13 @@ import sympy as sp
 from src.animator.animator import Animator
 from src.simulator.simulator import Simulator
 from src.systems.double_pendulum import DoublePendulum, DPParams
-from src.systems.reaction_wheel import ReactionWheel, RWParams
-from src.systems.three_link_reaction_wheel import TLRW, TLRWParams
+from src.systems.inv_pend_1l_rw import IP1LRW, IP1LRWParams
+from src.systems.inv_pend_3l_rw import IP3LRW, IP3LRWParams
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a robotic system.")
     parser.add_argument("system", type=str, help="The robotic system to simulate.")
-    parser.add_argument("--q0", "-q", type=float, nargs="+", required=True, help="Initial joint angles and velocities.")
+    parser.add_argument("--q0", "-Q", type=float, nargs="+", required=True, help="Initial joint angles and velocities.")
     parser.add_argument("--duration", "-D", type=int, default=5, help="Duration of the animation.")
     parser.add_argument("--fps", "-F", type=int, default=30, help="Frames per second of the animation.")
     parser.add_argument("--speed", "-S", type=float, default=1.0, help="Speed of the animation.")
@@ -28,9 +28,9 @@ if __name__ == "__main__":
     start_solve = perf_counter()
 
     try:
-        if args.system.lower() == "reactionwheel":
-            system = ReactionWheel(
-                RWParams(
+        if args.system.lower() == "ip1lrw":
+            system = IP1LRW(
+                IP1LRWParams(
                     l_1=0.254,
                     l_c1=0.127,
                     m_1=0.5,
@@ -42,8 +42,8 @@ if __name__ == "__main__":
             with open(f"cache/DoublePendulum", "rb") as infile:
                 system = pickle.load(infile)
             # system = DoublePendulum(DPParams())
-        elif args.system.lower() == "tlrw":
-            system = TLRW(TLRWParams())
+        elif args.system.lower() == "ip3lrw":
+            system = IP3LRW(IP3LRWParams())
         else:
             print("Please specify a system to simulate.")
             exit(1)

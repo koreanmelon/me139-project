@@ -17,7 +17,7 @@ SolFunc = Callable[
 
 
 @dataclass
-class TLRWParams:
+class IP3LRWParams:
     l_1: float = 0.1524  # 6 inches
     l_c1: float = 0.1524 / 2
     l_2: float = 0.1778  # 7 inches
@@ -31,9 +31,9 @@ class TLRWParams:
     m_w: float = 0.5
 
 
-class TLRW(RS):
+class IP3LRW(RS):
 
-    def __init__(self, params: TLRWParams) -> None:
+    def __init__(self, params: IP3LRWParams) -> None:
         super().__init__(
             Link(params.m_1, params.l_1, params.l_c1, LinkType.ROD),
             Link(params.m_2, params.l_2, params.l_c2, LinkType.ROD),

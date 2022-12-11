@@ -2,14 +2,14 @@ import unittest
 
 import numpy as np
 import sympy as sp
-from src.systems.reaction_wheel import ReactionWheel, RWParams
+from src.systems.inv_pend_1l_rw import IP1LRW, IP1LRWParams
 from src.systems.system.system import g
 
 
 class TestSystem(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.system = ReactionWheel(RWParams())
+        self.system = IP1LRW(IP1LRWParams())
 
     def test_T(self):
         self.assertEqual(self.system.T["1->0"], sp.Matrix([
