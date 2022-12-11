@@ -14,7 +14,20 @@ The main idea of this project is to design and create a bipedal robot that is ab
 
 ## Quick Start
 
-View the `src/case-1.ipynb` file to see the code for the first case study.
+To simulate any of the existing systems with default settings, run the following command in the root directory.
+```bash
+$ python3 main.py reactionwheel 
+```
+
+An example command with some additional settings is shown below.
+```bash
+$ python3 main.py reactionwheel --fps 60 --duration 30 --save --no-show
+```
+
+For help with any parameters, simply run
+```bash
+$ python3 main.py --help
+```
 
 ## Project Structure
 
@@ -29,6 +42,6 @@ The project is organized as follows:
 
 The `src/` directory is organized as follows:
 
-- `simulator/` contains the simulator code which solves an IVP for a given system
-- `animation/` contains the code that renders and saves the simulation
+- `animator/` handles rendering and saving the simulation
+- `simulator/` solves an IVP for a given system
 - `systems/` contains the code that defines the system dynamics for various robots

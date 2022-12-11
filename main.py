@@ -12,6 +12,7 @@ from src.systems.double_pendulum import DoublePendulum, DPParams
 from src.systems.inv_pend_1l_rw import IP1LRW, IP1LRWParams
 from src.systems.inv_pend_3l_rw import IP3LRW, IP3LRWParams
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a robotic system.")
     parser.add_argument("system", type=str, help="The robotic system to simulate.")
@@ -24,7 +25,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("Solving the system...")
+    def vprint(print_str):
+        if args.verbose:
+            print(print_str)
+
+    vprint("Solving the system...")
     start_solve = perf_counter()
 
     try:
@@ -45,16 +50,16 @@ if __name__ == "__main__":
         elif args.system.lower() == "ip3lrw":
             system = IP3LRW(IP3LRWParams())
         else:
-            print("Please specify a system to simulate.")
+            vprint("Please specify a system to simulate.")
             exit(1)
     except Exception as e:
         end_solve = perf_counter()
-        print(f"System solving failed after {end_solve - start_solve:.3f} seconds.\n")
+        vprint(f"System solving failed after {end_solve - start_solve:.3f} seconds.\n")
         raise e
 
     end_solve = perf_counter()
 
-    print(f"System solved in {end_solve - start_solve:.3f} seconds.\n")
+    vprint(f"System solved in {end_solve - start_solve:.3f} seconds.\n")
 
     Path(f"cache/{system.__class__.__name__}").touch(exist_ok=True)
     with open(f"cache/{system.__class__.__name__}", "wb") as outfile:
@@ -62,7 +67,7 @@ if __name__ == "__main__":
         pickle.dump(system, outfile)
         end_serialize = perf_counter()
 
-    print(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
+    vprint(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
 
     sim = Simulator(
         system=system,
@@ -76,12 +81,12 @@ if __name__ == "__main__":
         sim.run(np.array(args.q0))
     except Exception as e:
         end_sim = perf_counter()
-        print(f"Simulation failed after {end_sim - start_sim:.3f} seconds.\n")
+        vprint(f"Simulation failed after {end_sim - start_sim:.3f} seconds.\n")
         raise e
 
     end_sim = perf_counter()
 
-    print(f"Simulation time: {end_sim - start_sim:.3f} sec\n")
+    vprint(f"Simulation time: {end_sim - start_sim:.3f} sec\n")
 
     ani = Animator(
         links=sim.links,
@@ -93,31 +98,31 @@ if __name__ == "__main__":
 
     )
 
-    print("Animating...")
+    vprint("Animating...")
     start_ani = perf_counter()
 
     try:
         ani.run()
     except Exception as e:
         end_ani = perf_counter()
-        print(f"Animation failed after {end_ani - start_ani:.3f} seconds.\n")
+        vprint(f"Animation failed after {end_ani - start_ani:.3f} seconds.\n")
         raise e
 
     end_ani = perf_counter()
 
-    print(f"Animation time: {end_ani - start_ani:.3f} sec\n")
+    vprint(f"Animation time: {end_ani - start_ani:.3f} sec\n")
 
     if args.save:
-        print("Saving...")
+        vprint("Saving...")
         start_save = perf_counter()
 
         try:
             ani.save(sim.system.__class__.__name__)
         except Exception as e:
             end_save = perf_counter()
-            print(f"Save failed after {end_save - start_save:.3f} seconds.\n")
+            vprint(f"Save failed after {end_save - start_save:.3f} seconds.\n")
             raise e
 
         end_save = perf_counter()
 
-        print(f"Save time: {end_save - start_save:.3f} sec\n")
+        vprint(f"Save time: {end_save - start_save:.3f} sec\n")
