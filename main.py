@@ -1,26 +1,25 @@
 import argparse
-import pickle
-from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 
+import dill as pickle
 import numpy as np
+import sympy as sp
 
 from src.animator.animator import Animator
 from src.simulator.simulator import Simulator
 from src.systems.double_pendulum import DoublePendulum, DPParams
-from src.systems.reaction_wheel import ReactionWheel, RWParams
-from src.systems.three_link_reaction_wheel import TLRW, TLRWParams
+from src.systems.inv_pend_1l_rw import IP1LRW, IP1LRWParams
+from src.systems.inv_pend_3l_rw import IP3LRW, IP3LRWParams
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate a robotic system.")
     parser.add_argument("system", type=str, help="The robotic system to simulate.")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Print verbose output.")
-    parser.add_argument("--q0", type=float, nargs="+", required=True, help="Initial joint angles and velocities.")
-    parser.add_argument("--duration", "-d", type=int, default=5, help="Duration of the animation.")
-    parser.add_argument("--fps", "-f", type=int, default=30, help="Frames per second of the animation.")
-    parser.add_argument("--speed", "-s", type=float, default=1.0, help="Speed of the animation.")
+    parser.add_argument("--q0", "-Q", type=float, nargs="+", required=True, help="Initial joint angles and velocities.")
+    parser.add_argument("--duration", "-D", type=int, default=5, help="Duration of the animation.")
+    parser.add_argument("--fps", "-F", type=int, default=30, help="Frames per second of the animation.")
+    parser.add_argument("--speed", "-S", type=float, default=1.0, help="Speed of the animation.")
     parser.add_argument("--save", action="store_true", help="Save the animation.")
     parser.add_argument("--no-show", action="store_true", help="Do not show the animation.")
 
@@ -34,20 +33,22 @@ if __name__ == "__main__":
     start_solve = perf_counter()
 
     try:
-        if args.system.lower() == "reactionwheel":
-            system = ReactionWheel(
-                RWParams(
-                    l_1=0.25,
-                    l_c1=0.125,
-                    m_1=1,
+        if args.system.lower() == "ip1lrw":
+            system = IP1LRW(
+                IP1LRWParams(
+                    l_1=0.254,
+                    l_c1=0.127,
+                    m_1=0.5,
                     m_2=0.5,
-                    r=0.076
+                    r=0.04
                 )
             )
         elif args.system.lower() == "doublependulum":
-            system = DoublePendulum(DPParams())
-        elif args.system.lower() == "tlrw":
-            system = TLRW(TLRWParams())
+            with open(f"cache/DoublePendulum", "rb") as infile:
+                system = pickle.load(infile)
+            # system = DoublePendulum(DPParams())
+        elif args.system.lower() == "ip3lrw":
+            system = IP3LRW(IP3LRWParams())
         else:
             vprint("Please specify a system to simulate.")
             exit(1)
@@ -60,14 +61,13 @@ if __name__ == "__main__":
 
     vprint(f"System solved in {end_solve - start_solve:.3f} seconds.\n")
 
-    # timestamp = datetime.now().isoformat(sep='T', timespec='seconds')
-    # Path(f"cache/{system.__class__.__name__}_{timestamp}").touch(exist_ok=True)
-    # with open(f"cache/{system.__class__.__name__}_{timestamp}", "wb") as outfile:
-    #     start_serialize = perf_counter()
-    #     pickle.dump(system, outfile)
-    #     end_serialize = perf_counter()
+    Path(f"cache/{system.__class__.__name__}").touch(exist_ok=True)
+    with open(f"cache/{system.__class__.__name__}", "wb") as outfile:
+        start_serialize = perf_counter()
+        pickle.dump(system, outfile)
+        end_serialize = perf_counter()
 
-    # vprint(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
+    vprint(f"System serialized in {end_serialize - start_serialize:.3f} seconds.\n")
 
     sim = Simulator(
         system=system,

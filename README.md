@@ -14,14 +14,29 @@ The main idea of this project is to design and create a bipedal robot that is ab
 
 ## Quick Start
 
+Make sure you have Python >3.10.6 installed. Create a virtual environment with
+```bash
+$ python3 -m venv .venv
+```
+
+Activate the virtual environment with
+```bash
+$ source .venv/bin/activate
+```
+
+After activating the virtual environment, install the required packages with
+```bash
+$ pip3 install -r requirements.txt
+```
+
 To simulate any of the existing systems with default settings, run the following command in the root directory.
 ```bash
-$ python3 main.py reactionwheel 
+$ python3 main.py ip1lrw --q0 0 0 0 0
 ```
 
 An example command with some additional settings is shown below.
 ```bash
-$ python3 main.py reactionwheel --fps 60 --duration 30 --save --no-show
+$ python3 main.py ip1lrw --q0 0 0 0 0 --fps 60 --duration 30 --save --no-show
 ```
 
 For help with any parameters, simply run

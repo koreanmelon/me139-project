@@ -12,7 +12,7 @@ from src.systems.system.system import StyledJointT, StyledLinkT, Vec, g
 
 
 @dataclass
-class RWParams:
+class IP1LRWParams:
     l_1: float = 1.0
     l_c1: float = 0.5
     r: float = 0.5
@@ -21,12 +21,12 @@ class RWParams:
     metrics: Metrics = Metrics(MetricsConfig(progressive=True))
 
 
-class ReactionWheel(RS):
+class IP1LRW(RS):
     """
     A system with a single link and a reaction wheel attached to the end of the link.
     """
 
-    def __init__(self, params: RWParams) -> None:
+    def __init__(self, params: IP1LRWParams) -> None:
         super().__init__(
             Link(
                 m=params.m_1,
@@ -79,7 +79,8 @@ class ReactionWheel(RS):
         theta_1d = Q[2]
         theta_2d = Q[3]
 
-        tau = self.torque_func(Q)
+        # tau = self.torque_func(Q)
+        tau = 0
 
         self.out_vals[t] = (tau, theta_2d)
 

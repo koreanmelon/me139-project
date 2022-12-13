@@ -4,11 +4,11 @@ from typing import Callable
 import numpy as np
 import sympy as sp
 from scipy.integrate import trapezoid
-
-from .system.link import CoordinateT, Link, LinkType, StyledJointT, StyledLinkT
-from .system.system import RoboticSystem as RS
-from .system.system import g
-from .system.types import Vec
+from src.systems.system.link import (CoordinateT, Link, LinkType, StyledJointT,
+                                     StyledLinkT)
+from src.systems.system.system import RoboticSystem as RS
+from src.systems.system.system import g
+from src.systems.system.types import Vec
 
 SolFunc = Callable[
     [float, float, float, float, float, float, float, float, float, float, float],
@@ -17,7 +17,7 @@ SolFunc = Callable[
 
 
 @dataclass
-class TLRWParams:
+class IP3LRWParams:
     l_1: float = 0.1524  # 6 inches
     l_c1: float = 0.1524 / 2
     l_2: float = 0.1778  # 7 inches
@@ -31,9 +31,9 @@ class TLRWParams:
     m_w: float = 0.5
 
 
-class TLRW(RS):
+class IP3LRW(RS):
 
-    def __init__(self, params: TLRWParams) -> None:
+    def __init__(self, params: IP3LRWParams) -> None:
         super().__init__(
             Link(params.m_1, params.l_1, params.l_c1, LinkType.ROD),
             Link(params.m_2, params.l_2, params.l_c2, LinkType.ROD),
